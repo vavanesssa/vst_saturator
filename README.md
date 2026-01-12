@@ -1,233 +1,191 @@
-🎛️ PRD — vst_saturator
+# 🎛️ PRD — vst_saturator
 
-(VST Saturator pédagogique, document vivant)
+(Educational VST Saturator, Living Document)
 
-⸻
+---
 
-🎯 Vision & intention du projet
+## 🎯 Project Vision & Intention
 
-Le projet vst_saturator a pour objectif de créer un plugin audio de saturation extrêmement simple, destiné avant tout à l’apprentissage du développement de VST.
-Ce plugin n’a pas vocation, dans sa première version, à être “parfait”, optimisé ou commercialisable. Il sert de terrain de jeu contrôlé pour comprendre :
-	•	comment fonctionne un VST dans un DAW (Ableton)
-	•	comment le son est traité en temps réel
-	•	comment l’UI est reliée au moteur audio
-	•	comment structurer un projet audio proprement
-	•	comment itérer sans casser l’existant
+The `vst_saturator` project aims to create an extremely simple audio saturation plugin, primarily designed for learning VST development.
+This plugin is not intended, in its first version, to be "perfect", optimized, or marketable. It serves as a controlled playground to understand:
+*   How a VST functions within a DAW (e.g., Ableton).
+*   How sound is processed in real-time.
+*   How the UI is connected to the audio engine.
+*   How to structure an audio project cleanly.
+*   How to iterate without breaking existing functionality.
 
-Le projet doit rester lisible, modifiable et didactique à chaque étape.
+The project must remain readable, modifiable, and didactic at every stage.
 
-⸻
+---
 
-🧠 Philosophie de développement
+## 🧠 Development Philosophy
 
-Ce projet est pensé comme un projet d’apprentissage long, pas comme un sprint.
+This project is conceived as a long-term learning project, not a sprint.
 
-Principes clés :
-	•	le code doit être compréhensible avant d’être performant
-	•	chaque fichier doit expliquer son rôle
-	•	chaque fonction importante doit être commentée
-	•	les variables clés doivent être facilement tweakables
-	•	le projet doit encourager l’expérimentation (UI, paramètres, DSP)
+**Key Principles:**
+*   Code must be understandable before being performant.
+*   Every file must explain its role.
+*   Every important function must be commented.
+*   Key variables must be easily tweakable.
+*   The project must encourage experimentation (UI, parameters, DSP).
 
-Le document PRD est un document vivant :
-👉 il doit être mis à jour au fur et à mesure de l’implémentation, avec :
-	•	ce qui est fait
-	•	ce qui reste à faire
-	•	les décisions techniques prises
-	•	les problèmes rencontrés et leurs solutions
+**This PRD is a living document:**
+👉 It must be updated as implementation progresses, including:
+*   What has been done.
+*   What remains to be done.
+*   Technical decisions made.
+*   Problems encountered and their solutions.
 
-⸻
+---
 
-📦 Description fonctionnelle du plugin
+## 📦 Functional Description
 
-vst_saturator est un effet audio (pas un instrument).
+`vst_saturator` is an audio effect (not an instrument).
 
-Fonction principale
+### Main Function
 
-Appliquer une saturation soft au signal audio entrant afin d’ajouter de la chaleur, de la densité et de la distorsion harmonique légère.
+Apply soft saturation to the incoming audio signal to add warmth, density, and light harmonic distortion.
 
-Paramètres initiaux (v1)
-	•	Drive
-Contrôle le niveau de gain appliqué avant la saturation.
-	•	Output
-Contrôle le niveau de sortie après saturation.
+### Initial Parameters (v1)
 
-Ces paramètres doivent être :
-	•	automatisables dans le DAW
-	•	visibles et modifiables via l’UI
-	•	documentés clairement dans le code
+*   **Drive**: Controls the gain level applied before saturation.
+*   **Output**: Controls the output level after saturation.
 
-⸻
+These parameters must be:
+*   Automatable in the DAW.
+*   Visible and editable via the UI.
+*   Clearly documented in the code.
 
-🧱 Stack technique cible
-	•	Langage : C++
-	•	Framework : JUCE
-	•	Format plugin : VST3
-	•	Plateformes :
-	•	macOS Apple Silicon + Intel (Universal Binary)
-	•	Windows x64
+---
 
-⸻
+## 🧱 Target Tech Stack
 
-💻 Environnement de développement (MacBook M3 Pro)
+*   **Language**: C++
+*   **Framework**: JUCE
+*   **Plugin Format**: VST3
+*   **Platforms**:
+    *   macOS Apple Silicon + Intel (Universal Binary)
+    *   Windows x64
 
-Le développement se fait sur macOS, avec comme objectif une compatibilité maximale.
+---
 
-Le projet doit être structuré pour permettre plus tard :
-	•	un build Windows
-	•	une extension AU (optionnelle)
-	•	des évolutions DSP sans refonte complète
+## 💻 Development Environment
 
-⸻
+The development is targeted for macOS (M3 Pro) compatibility, but the code is cross-platform.
 
-🗂️ Structure du projet (intentionnelle)
+The project structure must allow for:
+*   Windows builds.
+*   Future AU extension (optional).
+*   DSP evolutions without a complete rewrite.
 
-La structure du projet doit être simple, logique et commentée.
+---
 
-Chaque dossier et fichier doit :
-	•	avoir un rôle clair
-	•	contenir un commentaire de tête expliquant sa responsabilité
-	•	éviter les “magical values” non expliquées
+## 🗂️ Project Structure (Intentional)
 
-Les constantes importantes (plages de paramètres, couleurs UI, comportements DSP) doivent être centralisées et faciles à modifier.
+The project structure must be simple, logical, and commented.
 
-⸻
+Each folder and file must:
+*   Have a clear role.
+*   Contain a header comment explaining its responsibility.
+*   Avoid unexplained "magical values".
 
-🎛️ UI — intention et liberté créative
+Important constants (parameter ranges, UI colors, DSP behaviors) must be centralized and easy to modify.
 
-L’interface graphique est volontairement :
-	•	simple dans sa structure
-	•	libre dans son style
+---
 
-L’objectif est que tu puisses :
-	•	changer les couleurs
-	•	modifier les tailles
-	•	expérimenter des layouts
-	•	tester des looks (clean, dirty, cyberpunk, etc.)
+## 🎛️ UI — Intention & Creative Freedom
 
-👉 Le code UI doit être écrit de manière explorable, pas opaque.
+The graphical interface is intentionally:
+*   Simple in structure.
+*   Free in style.
 
-⸻
-
-🔊 DSP — règles fondamentales
-
-Le traitement audio doit respecter strictement les règles du temps réel :
-	•	aucune allocation mémoire dans le callback audio
-	•	aucun log dans le thread audio
-	•	aucun mutex / lock
-	•	traitement clair, lisible, commenté
-
-La saturation utilisée au départ est volontairement simple (ex : tanh) afin de se concentrer sur la compréhension plutôt que la sophistication.
-
-⸻
-
-🧪 Objectifs pédagogiques explicites
-
-À la fin de la v1, le projet doit t’avoir permis de comprendre :
-	•	comment un DAW appelle un plugin audio
-	•	comment les buffers audio sont traités
-	•	comment un paramètre UI impacte le DSP
-	•	comment structurer un plugin proprement
-	•	comment tester et déboguer un VST
-
-⸻
-
-🗺️ Plan d’action détaillé
-
-Phase 0 — Préparation 🧱
-
-Objectif : environnement prêt et projet compilable
-Tâches :
-	•	installer les outils nécessaires
-	•	créer le projet JUCE
-	•	configurer le format VST3
-	•	compiler un plugin vide
-
-⸻
-
-Phase 1 — Audio pass-through 🔊
-
-Objectif : vérifier que le son traverse le plugin sans modification
-Tâches :
-	•	implémenter processBlock
-	•	s’assurer que le son est inchangé
-	•	charger le plugin dans Ableton
-	•	documenter le flux audio
-
-⸻
-
-Phase 2 — Paramètres 🎚️
-
-Objectif : contrôler le son via des paramètres
-Tâches :
-	•	créer Drive et Output
-	•	relier les paramètres au moteur audio
-	•	vérifier l’automation
-	•	commenter le système de paramètres
-
-⸻
-
-Phase 3 — Saturation 🔥
-
-Objectif : ajouter une saturation audible et contrôlable
-Tâches :
-	•	implémenter la fonction de saturation
-	•	gérer le gain staging
-	•	tester à différents niveaux
-	•	documenter le DSP
-
-⸻
-
-Phase 4 — UI minimale 🎨
-
-Objectif : interface fonctionnelle et modifiable
-Tâches :
-	•	créer les sliders
-	•	relier UI ↔ paramètres
-	•	structurer le code UI
-	•	commenter les choix visuels
-
-⸻
-
-Phase 5 — Stabilisation 🧪
-
-Objectif : plugin stable et compréhensible
-Tâches :
-	•	tests à différents sample rates
-	•	tests de buffer size
-	•	nettoyage du code
-	•	mise à jour complète de la documentation
-
-⸻
-
-📝 Documentation & commentaires (obligatoire)
-
-Tout le code doit être :
-	•	commenté de manière pédagogique
-	•	lisible sans connaissance préalable
-	•	structuré pour être relu plus tard
-
-Chaque fichier doit expliquer :
-	•	ce qu’il fait
-	•	pourquoi il existe
-	•	comment il interagit avec les autres
-
-⸻
-
-📌 État du document
-
-Ce PRD :
-	•	doit être mis à jour en continu
-	•	doit refléter l’état réel du projet
-	•	sert de référence centrale
-
-Il est normal qu’il évolue avec :
-	•	de nouvelles idées
-	•	des contraintes découvertes
-	•	des ajustements techniques
-
-⸻
-
-🚀 Prochaine étape
-
-👉 Générer la checklist d’installation exacte + le squelette JUCE minimal + la structure de fichiers commentée
+The goal is for you to be able to:
+*   Change colors.
+*   Modify sizes.
+*   Experiment with layouts.
+*   Test different looks (clean, dirty, cyberpunk, etc.).
+
+👉 The UI code must be written to be explorable, not opaque.
+
+---
+
+## 🔊 DSP — Fundamental Rules
+
+Audio processing must strictly respect real-time rules:
+*   **No memory allocation** in the audio callback.
+*   **No logging** in the audio thread.
+*   **No mutex / locks**.
+*   Processing must be clear, readable, and commented.
+
+The saturation used initially is intentionally simple (e.g., `tanh`) to focus on understanding rather than sophistication.
+
+---
+
+## 🧪 Explicit Educational Objectives
+
+By the end of v1, the project should allow you to understand:
+*   How a DAW calls an audio plugin.
+*   How audio buffers are processed.
+*   How a UI parameter impacts the DSP.
+*   How to structure a plugin properly.
+*   How to test and debug a VST.
+
+---
+
+## 🗺️ Detailed Action Plan
+
+### Phase 0 — Preparation 🧱
+*Goal: Environment ready and project compilable*
+*   [x] Install necessary tools (CMake, C++ Compiler).
+*   [x] Create JUCE project structure.
+*   [x] Configure VST3 format.
+*   [x] Compile an empty plugin.
+
+### Phase 1 — Audio Pass-through 🔊
+*Goal: Verify sound passes through the plugin without modification*
+*   [ ] Implement `processBlock`.
+*   [ ] Ensure sound is unchanged.
+*   [ ] Load plugin in DAW.
+*   [ ] Document audio flow.
+
+### Phase 2 — Parameters 🎚️
+*Goal: Control sound via parameters*
+*   [ ] Create Drive and Output parameters.
+*   [ ] Link parameters to audio engine.
+*   [ ] Verify automation.
+*   [ ] Comment parameter system.
+
+### Phase 3 — Saturation 🔥
+*Goal: Add audible and controllable saturation*
+*   [ ] Implement saturation function.
+*   [ ] Handle gain staging.
+*   [ ] Test at different levels.
+*   [ ] Document DSP.
+
+### Phase 4 — Minimal UI 🎨
+*Goal: Functional and modifiable interface*
+*   [ ] Create sliders.
+*   [ ] Link UI ↔ Parameters.
+*   [ ] Structure UI code.
+*   [ ] Comment visual choices.
+
+### Phase 5 — Stabilization 🧪
+*Goal: Stable and understandable plugin*
+*   [ ] Test at different sample rates.
+*   [ ] Buffer size tests.
+*   [ ] Code cleanup.
+*   [ ] Full documentation update.
+
+---
+
+## 📝 Documentation & Comments (Mandatory)
+
+All code must be:
+*   Commented in an educational manner.
+*   Readable without prior knowledge.
+*   Structured for future review.
+
+Each file must explain:
+*   What it does.
+*   Why it exists.
+*   How it interacts with others.

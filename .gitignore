@@ -1,41 +1,22 @@
-# Prerequisites
-*.d
+# CMake Build Artifacts
+build/
+cmake-build-debug/
+cmake-build-release/
+.vs/
+*.vcxproj
+*.vcxproj.user
+*.sln
+*.xcodeproj
+*.xcworkspace
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# OS files
+.DS_Store
+Thumbs.db
 
-# Precompiled Headers
-*.gch
-*.pch
+# IDE settings
+.vscode/
+.idea/
+*.swp
 
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# debug information files
-*.dwo
+# JUCE
+JuceLibraryCode/
