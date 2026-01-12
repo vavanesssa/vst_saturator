@@ -18,6 +18,28 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor (Vst_satura
     // Phase 4: Setting up the UI
     // -------------------------------------------------------------------------
 
+    // Load background image from plugin's Resources folder
+    juce::File backgroundFile;
+
+    // First try: Bundle Resources folder (macOS VST3)
+    auto appDir = juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+    backgroundFile = appDir.getChildFile("Contents/Resources/background.png");
+
+    // Fallback: Try Assets in current working directory
+    if (!backgroundFile.existsAsFile())
+    {
+        backgroundFile = juce::File::getCurrentWorkingDirectory().getChildFile("Assets/background.png");
+    }
+
+    if (backgroundFile.existsAsFile())
+    {
+        backgroundImage = juce::ImageFileFormat::loadFrom(backgroundFile);
+    }
+
+    // Apply custom LookAndFeel to sliders
+    driveSlider.setLookAndFeel(&customLookAndFeel);
+    outputSlider.setLookAndFeel(&customLookAndFeel);
+
     // 1. Configure Drive Slider
     driveSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     driveSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
@@ -55,8 +77,29 @@ Vst_saturatorAudioProcessorEditor::~Vst_saturatorAudioProcessorEditor()
 //==============================================================================
 void Vst_saturatorAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // Fill the background with a dark color
-    g.fillAll (juce::Colour::fromFloatRGBA (0.1f, 0.1f, 0.12f, 1.0f)); // Dark grey/blue
+    // Draw background image scaled to current size, or fallback to color
+    if (!backgroundImage.isNull())
+    {
+        // Only rescale if the window size has changed
+        if (lastScaledWidth != getWidth() || lastScaledHeight != getHeight())
+        {
+            // Create a scaled version of the background
+            scaledBackgroundImage = juce::Image(juce::Image::RGB, getWidth(), getHeight(), true);
+            juce::Graphics bg(scaledBackgroundImage);
+            bg.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(),
+                        0, 0, backgroundImage.getWidth(), backgroundImage.getHeight(), false);
+
+            lastScaledWidth = getWidth();
+            lastScaledHeight = getHeight();
+        }
+
+        g.drawImageAt(scaledBackgroundImage, 0, 0);
+    }
+    else
+    {
+        // Fallback: Fill with a dark color
+        g.fillAll (juce::Colour::fromFloatRGBA (0.1f, 0.1f, 0.12f, 1.0f)); // Dark grey/blue
+    }
 
     // Draw some text
     g.setColour (juce::Colours::white);
@@ -72,22 +115,29 @@ void Vst_saturatorAudioProcessorEditor::paint (juce::Graphics& g)
 void Vst_saturatorAudioProcessorEditor::resized()
 {
     // This is where we define where components go.
-    // We use a "FlexBox" or simple bounds logic.
+    // The layout is responsive and adapts to window size.
 
-    auto area = getLocalBounds();
-    auto topArea = area.removeFromTop(50); // Title area
-    auto bottomArea = area.removeFromBottom(30); // Footer area
+    // Reset the cached scaled background so it gets redrawn
+    lastScaledWidth = 0;
+    lastScaledHeight = 0;
 
-    // We have two sliders, let's put them side by side
-    int sliderWidth = 120;
-    int sliderHeight = 150;
+    // Calculate responsive slider dimensions based on window size
+    int sliderWidth = getWidth() / 4;  // 25% of width
+    int sliderHeight = getHeight() * 2 / 3;  // 67% of height
+
+    // Ensure minimum sizes for usability
+    sliderWidth = juce::jmax(80, sliderWidth);
+    sliderHeight = juce::jmax(100, sliderHeight);
 
     // Calculate positions to center them
-    int spacing = 20;
+    int spacing = juce::jmax(20, getWidth() / 20);
     int totalWidth = (sliderWidth * 2) + spacing;
     int startX = (getWidth() - totalWidth) / 2;
-    int startY = (getHeight() - sliderHeight) / 2 + 10; // Offset slightly down
+    int startY = (getHeight() - sliderHeight) / 2;
 
     driveSlider.setBounds(startX, startY, sliderWidth, sliderHeight);
     outputSlider.setBounds(startX + sliderWidth + spacing, startY, sliderWidth, sliderHeight);
+
+    // Trigger a repaint to redraw the background
+    repaint();
 }

@@ -18,6 +18,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "CustomLookAndFeel.h"
 
 //==============================================================================
 class Vst_saturatorAudioProcessorEditor  : public juce::AudioProcessorEditor
@@ -56,6 +57,15 @@ private:
     // and updating the parameter when the slider moves.
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> outputAttachment;
+
+    // Custom UI styling
+    CustomLookAndFeel customLookAndFeel;
+
+    // Background image
+    juce::Image backgroundImage;
+    juce::Image scaledBackgroundImage;
+    int lastScaledWidth = 0;
+    int lastScaledHeight = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Vst_saturatorAudioProcessorEditor)
 };

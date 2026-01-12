@@ -13,6 +13,17 @@ project(vst_saturator VERSION 0.0.1)
 # The 'libs/JUCE' folder must exist (via git submodule).
 add_subdirectory(libs/JUCE)
 
+# Ignore VST3 parameter ID mismatch warning (not applicable for new plugins)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1")
+
+# Copy assets to build directory
+add_custom_target(copy_assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/Assets
+    ${CMAKE_BINARY_DIR}/Assets
+    COMMENT "Copying assets to build directory"
+)
+
 # -----------------------------------------------------------------------------
 # 🎛️ Plugin Definition
 # -----------------------------------------------------------------------------
@@ -44,6 +55,8 @@ target_sources(vst_saturator
         Source/PluginProcessor.h
         Source/PluginEditor.cpp
         Source/PluginEditor.h
+        Source/CustomLookAndFeel.cpp
+        Source/CustomLookAndFeel.h
 )
 
 # -----------------------------------------------------------------------------
