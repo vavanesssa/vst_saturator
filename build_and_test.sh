@@ -23,11 +23,11 @@ echo ""
 echo "✨ BUILD COMPLETE! Hash: $BUILD_HASH"
 echo ""
 
-STANDALONE_APP="build/steverator_artefacts/Release/Standalone/steverator.app"
+STANDALONE_APP="build/steverator_artefacts/Release/Standalone/Steverator.app"
 
 # Copy version.txt and PNG images to both VST3 and Standalone Resources
-cp Assets/version.txt "build/steverator_artefacts/Release/Standalone/steverator.app/Contents/Resources/" 2>/dev/null || true
-cp Assets/*.png "build/steverator_artefacts/Release/Standalone/steverator.app/Contents/Resources/" 2>/dev/null || true
+cp Assets/version.txt "build/steverator_artefacts/Release/Standalone/Steverator.app/Contents/Resources/" 2>/dev/null || true
+cp Assets/*.png "build/steverator_artefacts/Release/Standalone/Steverator.app/Contents/Resources/" 2>/dev/null || true
 cp Assets/version.txt "build/steverator_artefacts/Release/VST3/steverator.vst3/Contents/Resources/" 2>/dev/null || true
 cp Assets/*.png "build/steverator_artefacts/Release/VST3/steverator.vst3/Contents/Resources/" 2>/dev/null || true
 

@@ -30,10 +30,18 @@ cd /Users/vava/Documents/GitHub/vst_saturator
 cmake -B build -DCMAKE_BUILD_TYPE=Release > /dev/null 2>&1
 cmake --build build --config Release 2>&1 | grep -E "(Building|Linking|Built|error)" | tail -20
 
+
 if [ $? -ne 0 ]; then
     echo "❌ Build failed!"
     exit 1
 fi
+
+# Copy assets to Standalone Build (so they work when we open it later)
+echo "📦 Copying assets to Standalone app..."
+mkdir -p "build/steverator_artefacts/Release/Standalone/Steverator.app/Contents/Resources"
+cp Assets/*.png "build/steverator_artefacts/Release/Standalone/Steverator.app/Contents/Resources/" 2>/dev/null || true
+cp Assets/version.txt "build/steverator_artefacts/Release/Standalone/Steverator.app/Contents/Resources/" 2>/dev/null || true
+
 
 echo ""
 echo "📦 Deploying..."
@@ -83,7 +91,7 @@ echo "You should see '$BUILD_HASH' in BIG ORANGE text at the BOTTOM"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "🚀 Launching Standalone..."
-open "/Users/vava/Documents/GitHub/vst_saturator/build/steverator_artefacts/Release/Standalone/steverator.app"
+open "/Users/vava/Documents/GitHub/vst_saturator/build/steverator_artefacts/Release/Standalone/Steverator.app"
 echo ""
 echo "Next (for VST3 in Ableton):"
 echo "1. Restart Ableton (Cmd+Q)"
