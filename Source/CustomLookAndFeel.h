@@ -36,6 +36,16 @@ public:
                          bool isMouseOverButton,
                          bool isButtonDown) override;
 
+    // Draw ComboBox with custom styling
+    void drawComboBox(juce::Graphics& g,
+                     int width, int height,
+                     bool isButtonDown,
+                     int buttonX, int buttonY,
+                     int buttonW, int buttonH,
+                     juce::ComboBox& box) override;
+
+    void positionComboBoxText(juce::ComboBox& box, juce::Label& label) override;
+
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomLookAndFeel)
 };

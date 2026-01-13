@@ -114,8 +114,22 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor (Vst_satura
     configureLabel(shapeLabel, "Shape");
     shapeLabel.attachToComponent(&shapeSlider, false);
 
+    // Waveshape ComboBox
+    waveshapeCombo.addItemList({
+        "Tube", "SoftClip", "HardClip", "Diode 1", "Diode 2",
+        "Linear Fold", "Sin Fold", "Zero-Square", "Downsample",
+        "Asym", "Rectify", "X-Shaper", "X-Shaper (Asym)",
+        "Sine Shaper", "Stomp Box", "Tape Sat.", "Overdrive", "Soft Sat."
+    }, 1);
+    waveshapeCombo.setLookAndFeel(&customLookAndFeel);
+    addAndMakeVisible(waveshapeCombo);
+    configureLabel(waveshapeLabel, "WAVE");
+    waveshapeLabel.attachToComponent(&waveshapeCombo, false);
+
     attachSlider(saturationAttachment, "drive", saturationSlider);
     attachSlider(shapeAttachment, "shape", shapeSlider);
+    waveshapeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
+        audioProcessor.apvts, "waveshape", waveshapeCombo);
 
     // B. Bande LOW
     configureEnableButton(lowEnableButton, "LOW");
@@ -336,7 +350,8 @@ void Vst_saturatorAudioProcessorEditor::resized()
     highSoftnessSlider.setBounds(scaleDesignBounds(col3X + 5, row2Y, knobWidth, knobHeight));
     highLevelSlider.setBounds(scaleDesignBounds(col3X + 5, row3Y, knobWidth, knobHeight));
 
-    // COLUMN 4: MASTER (3 knobs - Output moved to column 1)
+    // COLUMN 4: MASTER (Waveshape selector + 3 knobs - Output moved to column 1)
+    waveshapeCombo.setBounds(scaleDesignBounds(col4X, buttonRowY + 10, columnWidth, 40));
     saturationSlider.setBounds(scaleDesignBounds(col4X + 5, row1Y, knobWidth, knobHeight));
     shapeSlider.setBounds(scaleDesignBounds(col4X + 5, row2Y, knobWidth, knobHeight));
     mixSlider.setBounds(scaleDesignBounds(col4X + 5, row3Y, knobWidth, knobHeight));

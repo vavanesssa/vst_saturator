@@ -57,8 +57,11 @@ private:
     // A. Saturation Globale
     juce::Slider saturationSlider, shapeSlider;
     juce::Label saturationLabel, shapeLabel;
+    juce::ComboBox waveshapeCombo;
+    juce::Label waveshapeLabel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> saturationAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> shapeAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> waveshapeAttachment;
 
     // B. Bande LOW
     juce::ToggleButton lowEnableButton;

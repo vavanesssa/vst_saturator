@@ -49,11 +49,15 @@ Apply soft saturation to the incoming audio signal with independent control of l
 ### Complete Parameter List (Current)
 
 **Global Controls:**
-*   **Drive**: Pre-saturation gain (0 - 12 dB, controls overall saturation intensity)
-*   **Shape**: Saturation curve shape (0 - 1, controls softness vs aggression)
-*   **Input Gain**: Pre-processing gain (0 - 12 dB)
+*   **Waveshape**: Saturation algorithm selector (18 different waveshaping curves)
+    - Tube, SoftClip, HardClip, Diode 1, Diode 2, Linear Fold, Sin Fold, Zero-Square
+    - Downsample, Asym, Rectify, X-Shaper, X-Shaper (Asym), Sine Shaper, Stomp Box
+    - Tape Sat., Overdrive, Soft Sat.
+*   **Drive**: Pre-saturation gain (0 - 24 dB, controls overall saturation intensity)
+*   **Shape**: Saturation curve modulation (0 - 1, modulates each waveshape differently)
+*   **Input Gain**: Pre-processing gain (-24 to +24 dB)
 *   **Mix**: Wet/dry blend (0 - 100%)
-*   **Output Gain**: Post-processing gain (0 - 12 dB)
+*   **Output Gain**: Post-processing gain (-24 to +24 dB)
 
 **LOW Band (100 Hz - 1 kHz):**
 *   **LOW Enable**: Toggle low-frequency band processing

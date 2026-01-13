@@ -116,3 +116,45 @@ void CustomLookAndFeel::drawToggleButton(juce::Graphics& g,
     g.setFont(juce::Font(18.0f, juce::Font::bold));  // Increased from 16pt to 18pt
     g.drawText(button.getButtonText(), bounds, juce::Justification::centred, true);
 }
+
+void CustomLookAndFeel::drawComboBox(juce::Graphics& g,
+                                     int width, int height,
+                                     bool isButtonDown,
+                                     int buttonX, int buttonY,
+                                     int buttonW, int buttonH,
+                                     juce::ComboBox& box)
+{
+    auto bounds = juce::Rectangle<float>(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+
+    // Background - warm beige
+    g.setColour(juce::Colour::fromFloatRGBA(0.98f, 0.95f, 0.90f, 1.0f));
+    g.fillRoundedRectangle(bounds, 6.0f);
+
+    // Border - dark orange-brown
+    g.setColour(juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f, 0.8f));
+    g.drawRoundedRectangle(bounds, 6.0f, 2.0f);
+
+    // Arrow button area
+    auto arrowZone = juce::Rectangle<float>(static_cast<float>(buttonX), static_cast<float>(buttonY),
+                                            static_cast<float>(buttonW), static_cast<float>(buttonH));
+
+    // Draw arrow (down triangle)
+    juce::Path arrow;
+    float arrowSize = 8.0f;
+    float centerX = arrowZone.getCentreX();
+    float centerY = arrowZone.getCentreY();
+
+    arrow.addTriangle(centerX - arrowSize * 0.5f, centerY - arrowSize * 0.3f,
+                     centerX + arrowSize * 0.5f, centerY - arrowSize * 0.3f,
+                     centerX, centerY + arrowSize * 0.3f);
+
+    g.setColour(juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f, 0.9f));
+    g.fillPath(arrow);
+}
+
+void CustomLookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label& label)
+{
+    label.setBounds(8, 1, box.getWidth() - 30, box.getHeight() - 2);
+    label.setFont(juce::Font(14.0f, juce::Font::bold));
+    label.setColour(juce::Label::textColourId, juce::Colour::fromFloatRGBA(0.5f, 0.3f, 0.1f, 1.0f));
+}
