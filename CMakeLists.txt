@@ -38,9 +38,9 @@ juce_add_plugin(steverator
     # The plugin code (must be unique 4 chars)
     PLUGIN_CODE "STEV"
     # Manufacturer code (must be unique 4 chars)
-    MANUFACTURER_CODE "MyEd"
+    MANUFACTURER_CODE "NXXA"
     # Bundle Identifier (Important for macOS)
-    BUNDLE_ID "com.myeducationalplugins.steverator"
+    BUNDLE_ID "com.neixxa.steverator"
     # Formats to build
     FORMATS VST3 Standalone
     # Name of the product

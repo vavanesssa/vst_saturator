@@ -1,26 +1,26 @@
 # 🎛️ PRD — steverator "Le Poisson Steve"
 
-(Educational VST Saturator, Living Document)
+(VST Saturator, Living Document)
 
 ---
 
 ## 🎯 Project Vision & Intention
 
-The `steverator` project is an educational VST3 audio plugin built with JUCE, demonstrating audio processing, UI design, and plugin architecture.
+The `steverator` project is a VST3 audio plugin built with JUCE, demonstrating audio processing, UI design, and plugin architecture.
 Themed around "Le Poisson Steve" (Steve the Fish), this plugin showcases:
 *   How a VST functions within a DAW (e.g., Ableton).
 *   How sound is processed in real-time with multi-band processing.
 *   How the UI is connected to the audio engine via JUCE's parameter system.
-*   How to structure an audio project cleanly and educationally.
+*   How to structure an audio project cleanly.
 *   How to iterate and refine without breaking existing functionality.
 
-The project remains readable, modifiable, and didactic at every stage.
+The project remains readable and modifiable at every stage.
 
 ---
 
 ## 🧠 Development Philosophy
 
-This project is conceived as a long-term learning project, not a sprint.
+This project is conceived as a long-term project, not a sprint.
 
 **Key Principles:**
 *   Code must be understandable before being performant.
@@ -35,6 +35,44 @@ This project is conceived as a long-term learning project, not a sprint.
 *   What remains to be done.
 *   Technical decisions made.
 *   Problems encountered and their solutions.
+
+---
+
+## 🤖 Technical Guide & Architecture (AI Context)
+*This section is designed to quickly orient AI on the project's structure.*
+
+### 🏗 Global Architecture (Model-View-Controller)
+The project uses **JUCE** and strictly separates audio processing from the graphical interface:
+
+*   **MODEL (State)**: `AudioProcessorValueTreeState (apvts)`
+    *   Located in `PluginProcessor`.
+    *   Single source of truth for all parameters (Drive, Mix, Freqs...).
+    *   Handles preset saving/loading (`getStateInformation`).
+
+*   **CONTROLLER (DSP & Logic)**: `PluginProcessor`
+    *   **File**: `Source/PluginProcessor.cpp`
+    *   **Core**: `processBlock()` is the real-time audio loop. **Critical:** No memory allocation, no locks here.
+    *   **Init**: `createParameterLayout()` defines all parameters at startup.
+
+*   **VIEW (Interface)**: `PluginEditor`
+    *   **File**: `Source/PluginEditor.cpp`
+    *   **Role**: Receives a reference to `PluginProcessor` to link Sliders to Parameters via `Attachments`.
+    *   **Rendering**: Uses `CustomLookAndFeel` for vector drawing (no PNGs for knobs).
+
+### 📍 Critical Entry Points
+
+| Action | Target File | Function / Zone |
+| :--- | :--- | :--- |
+| **Add a Parameter** | `PluginProcessor.cpp` | `createParameterLayout()` (ID & Range definition) |
+| **Modify Sound** | `PluginProcessor.cpp` | `processBlock()` (DSP Algorithm) |
+| **Modify UI Layout** | `PluginEditor.cpp` | `resized()` (FlexBox Positioning) |
+| **Style Knobs** | `CustomLookAndFeel.cpp` | `drawRotarySlider()` |
+| **Build & Test** | Root | `./build_and_deploy.sh` (Master Script) |
+
+### ⚠️ Golden Rules
+1.  **Real-Time**: In `processBlock`, **FORBIDDEN** to use `new`, `malloc`, `std::vector::push_back`, or blocking functions.
+2.  **State Management**: Never store UI state separate from APVTS if it affects the sound.
+3.  **Assets**: Images (e.g., mascot) are in `Assets/` and loaded in `PluginEditor`.
 
 ---
 
@@ -156,181 +194,54 @@ The saturation used initially is intentionally simple (e.g., `tanh`) to focus on
 
 ---
 
-## 🧪 Explicit Educational Objectives
+## 🚀 Roadmap & Future Features
 
-By the end of v1, the project should allow you to understand:
-*   How a DAW calls an audio plugin.
-*   How audio buffers are processed.
-*   How a UI parameter impacts the DSP.
-*   How to structure a plugin properly.
-*   How to test and debug a VST.
-
----
-
-## 🗺️ Implementation Status
-
-### ✅ Completed Phases
-
-### Phase 0 — Preparation 🧱
-*Goal: Environment ready and project compilable*
-*   [x] Install necessary tools (CMake, C++ Compiler).
-*   [x] Create JUCE project structure.
-*   [x] Configure VST3 format.
-*   [x] Compile an empty plugin.
-
-### Phase 1 — Audio Pass-through 🔊
-*Goal: Verify sound passes through the plugin without modification*
-*   [x] Implement `processBlock`.
-*   [x] Ensure sound is unchanged.
-*   [x] Load plugin in DAW.
-*   [x] Document audio flow.
-
-### Phase 2 — Core Parameters 🎚️
-*Goal: Control sound via parameters*
-*   [x] Create global parameters (Drive, Shape, Input, Output, Mix).
-*   [x] Implement AudioProcessorValueTreeState (APVTS).
-*   [x] Link parameters to audio engine.
-*   [x] Verify automation in DAW.
-*   [x] Document parameter system.
-
-### Phase 3 — Multi-Band Saturation 🔥
-*Goal: Add 3-band saturation with independent control*
-*   [x] Implement Linkwitz-Riley crossover filters (2/2/2 topology).
-*   [x] Create LOW band parameters (freq, warmth, level, enable).
-*   [x] Create HIGH band parameters (freq, softness, level, enable).
-*   [x] Implement saturation function with tanh.
-*   [x] Handle gain staging and mixing.
-*   [x] Test at different frequencies and levels.
-*   [x] Document DSP architecture.
-*   [x] Implement Pre/Post routing toggle.
-*   [x] Add soft limiter on output.
-
-### Phase 4 — Advanced UI 🎨
-*Goal: Functional, visually appealing interface with "Steve the Fish" theme*
-*   [x] Create rotary sliders (knobs).
-*   [x] Implement all 13 parameter controls.
-*   [x] Link UI ↔ Parameters via APVTS attachments.
-*   [x] Design and implement custom knob drawing (no image dependencies).
-*   [x] Design and implement toggle buttons with visual state feedback.
-*   [x] Integrate "Steve the Fish" mascot image on left side.
-*   [x] Implement warm beige color scheme matching theme.
-*   [x] Add value display directly on knobs.
-*   [x] Optimize spacing and layout for readability.
-*   [x] Implement FlexBox responsive layout.
-*   [x] Add version hash display in bottom corner.
-
-### Phase 5 — Polish & Documentation 🧪
-*Goal: Stable, documented, and maintainable codebase*
-*   [x] Test at different sample rates (44.1k, 48k, 96k).
-*   [x] Test at different buffer sizes.
-*   [x] Fix compilation warnings and errors.
-*   [x] Code organization and cleanup.
-*   [x] Update README with current implementation.
-*   [x] Update AGENTS.md with developer guidelines.
-*   [x] Document all parameters and controls.
-*   [x] Implement automated build script with version hashing.
+### 📚 User Documentation System
+*   [ ] Implement a **User Manual Modal** accessible via a "?" button in the top-left corner.
+*   [ ] Content: Explanation of all parameters (Drive, Waveshapes, Bands).
+*   [ ] **Bilingual Support**: Toggle between **English** and **French**.
+*   [ ] Implementation:
+    *   New `DocumentationComponent` overlay.
+    *   JSON or string-based localization system.
 
 ---
+## 📁 File Architecture & Key Functions
 
-## 🔧 Development Workflow
-
-### Quick Build & Deploy
-
-For development, use the automated build script:
-
-```bash
-cd /Users/vava/Documents/GitHub/steverator
-./build_and_deploy.sh
+```plaintext
+steverator/
+├── CMakeLists.txt              # 🛠 Build configuration (JUCE VST3 settings)
+├── build_and_deploy.sh         # 🚀 MASTER SCRIPT: Builds, signs, deploys, and launches standalone
+├── Source/
+│   ├── PluginProcessor.h       # 📋 Header: Processor declaration
+│   ├── PluginProcessor.cpp     # 🧠 BRAIN (Controller & DSP):
+│   │   ├── createParameterLayout() # 🎚 Defines all 13 parameters (IDs, Ranges, Names)
+│   │   ├── prepareToPlay()         # ⚙️ Init: Sample rate, buffer size setup
+│   │   ├── processBlock()          # ⚡️ DSP LOOP: Real-time audio processing (CRITICAL: No allocs!)
+│   │   │   └── [Saturator Logic]   #     -> 3-Band Split -> Saturation -> Mix -> Limiter
+│   │   └── getStateInformation()   # 💾 Persistence: Saves/Loads parameters for presets
+│   │
+│   ├── PluginEditor.h          # 📋 Header: Editor declaration
+│   ├── PluginEditor.cpp        # 🎨 FACE (View & UI):
+│   │   ├── PluginEditor()          # 🏗 Constructor: Loads assets, inits attachments
+│   │   ├── paint()                 # 🖌 Background drawing (Steve image, Titles)
+│   │   └── resized()               # 📐 LAYOUT: FlexBox positioning (Responsive calculations)
+│   │
+│   ├── CustomLookAndFeel.h     # 📋 Header: Custom styling
+│   └── CustomLookAndFeel.cpp   # 💅 STYLE (vector graphics):
+│       ├── drawRotarySlider()      # 🎛 Procedural Knob: Golden/Orange gradients, value text
+│       └── drawToggleButton()      # 🔘 Custom Buttons: Active/Inactive states with glow
+│
+└── Assets/
+    └── steve.png               # 🐟 Mascot: "Steve the Fish" image (loaded in Editor)
 ```
 
-This script:
-- Generates a **unique 5-character build hash** (e.g., `09FA1`)
-- Compiles the plugin (Release mode) with the hash embedded
-- Deploys to `/Library/Audio/Plug-Ins/VST3/steverator.vst3`
-- Copies all theme assets (`Assets/steve.png`)
-- Signs the plugin
-- Clears all Ableton caches
-- Launches the standalone version for quick testing
 
-**Build Hash (Important for Testing):**
 
-After running the script, you'll see:
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✨ BUILD COMPLETE!
-
-🔑 BUILD HASH: 09FA1
-📅 TIMESTAMP: 2026-01-13 22:08:18
-
-You should see '09FA1' prominently at the BOTTOM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-**The build hash appears in the bottom-right corner of the plugin UI.** This ensures you're testing the fresh version, not a cached one.
-
-**After running the script:**
-1. For **Standalone testing**: The script automatically launches the app
-2. For **Ableton testing**:
-   - Restart Ableton completely (Cmd+Q)
-   - Reopen Ableton
-   - Rescan plugins in Preferences → File/Folder → Rescan
-   - Search for "steverator" in the plugin browser
-   - Open the plugin and check the build hash in the bottom-right corner
-   - It should match the hash shown in the terminal output
-
-If you see an old hash or "DEV", your cache wasn't cleared properly. Run the script again.
-
-### Theme Assets
-
-Theme assets are stored in `/Assets/`:
-- **steve.png** - "Steve the Fish" mascot image (displayed on left side of UI)
-
-Assets are:
-- Loaded at editor startup from `Assets/` or bundled resources
-- Scaled to fit the left panel (220px wide)
-- Cached for performance
-
-To update the theme image:
-1. Replace `Assets/steve.png` with new image
-2. Run `./build_and_deploy.sh`
-3. Restart Ableton and rescan plugins
-
----
-
-## 📁 Source Code Files
-
-### Core Audio Processing
-- **`Source/PluginProcessor.h`** - Audio plugin interface and parameter declarations
-- **`Source/PluginProcessor.cpp`** - Real-time audio DSP implementation
-  - `createParameterLayout()` - Defines all 13 parameters
-  - `processBlock()` - Main audio processing loop with multi-band saturation
-  - 3-band Linkwitz-Riley crossover filter implementation
-  - Soft tanh saturation with gain staging
-
-### User Interface
-- **`Source/PluginEditor.h`** - UI component declarations and layout
-- **`Source/PluginEditor.cpp`** - UI rendering and event handling
-  - Window layout and spacing (1100x700)
-  - Parameter control positioning via FlexBox
-  - "Steve the Fish" image loading and display
-  - Build hash display in bottom-right corner
-- **`Source/CustomLookAndFeel.h`** - Custom UI styling interface
-- **`Source/CustomLookAndFeel.cpp`** - Procedural drawing for knobs and buttons
-  - `drawRotarySlider()` - Golden/orange gradient knobs with value display
-  - `drawToggleButton()` - LOW/HIGH buttons with active/inactive states
-
-### Build Configuration
-- **`CMakeLists.txt`** - JUCE VST3 build configuration
-- **`build_and_deploy.sh`** - Automated build, sign, and deployment script
-
-### Assets
-- **`Assets/steve.png`** - "Steve the Fish" mascot (220px wide display)
-- **`Assets/version.txt`** - Auto-generated build hash and timestamp
 
 ## 📝 Code Documentation Standards
 
 All code is documented with:
-*   Educational comments explaining the "why" not just the "what"
+*   Comprehensive comments explaining the "why" not just the "what"
 *   Clear function signatures with parameter documentation
 *   Inline comments for non-obvious logic
 *   Real-time safety annotations for audio callbacks

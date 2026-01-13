@@ -6,7 +6,7 @@ This file contains instructions for Claude (or other AI agents) working on the s
 
 ## 📋 Overview
 
-**steverator** is an educational VST3 audio plugin built with JUCE, themed around "Le Poisson Steve" (Steve the Fish).
+**steverator** is a VST3 audio plugin built with JUCE, themed around "Le Poisson Steve" (Steve the Fish).
 
 **Current Status (January 2026):**
 - ✅ Complete 3-band saturation with independent frequency control
@@ -20,7 +20,7 @@ This file contains instructions for Claude (or other AI agents) working on the s
 - Written in C++17 with JUCE framework
 - Builds to VST3 format
 - macOS target (Apple Silicon compatible)
-- Focus on clarity and education over performance
+- Focus on clarity and maintainability
 
 ---
 
