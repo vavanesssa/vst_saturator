@@ -1,0 +1,73 @@
+name: Build VST3
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build_windows:
+    name: Build Windows (VST3)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install JUCE dependencies
+        shell: bash
+        run: |
+          # JUCE on Windows might need minimal setup, but usually CMake handles it.
+          # Ensure submodules are up to date
+          git submodule update --init --recursive
+
+      - name: Configure CMake
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Copy Assets (if needed)
+        # Simulating the manual copy script if it's not fully handled by CMake install
+        shell: bash
+        run: |
+          mkdir -p build/VST3/Steverator.vst3/Contents/Resources
+          cp Assets/steve.png build/VST3/Steverator.vst3/Contents/Resources/ 2>/dev/null || :
+          echo "Windows Build" > build/VST3/Steverator.vst3/Contents/Resources/version.txt
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Steverator_Windows_VST3
+          path: build/Source/steverator_artefacts/Release/VST3/Steverator.vst3
+
+  build_mac:
+    name: Build macOS (VST3)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          # Xcode is pre-installed on macos-latest
+          git submodule update --init --recursive
+
+      - name: Configure CMake
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Steverator_Mac_VST3
+          path: build/Source/steverator_artefacts/Release/VST3/Steverator.vst3
