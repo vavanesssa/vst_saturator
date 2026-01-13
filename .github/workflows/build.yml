@@ -35,15 +35,15 @@ jobs:
         # Simulating the manual copy script if it's not fully handled by CMake install
         shell: bash
         run: |
-          mkdir -p build/VST3/Steverator.vst3/Contents/Resources
-          cp Assets/steve.png build/VST3/Steverator.vst3/Contents/Resources/ 2>/dev/null || :
-          echo "Windows Build" > build/VST3/Steverator.vst3/Contents/Resources/version.txt
+          mkdir -p build/steverator_artefacts/Release/VST3/Steverator.vst3/Contents/Resources
+          cp Assets/steve.png build/steverator_artefacts/Release/VST3/Steverator.vst3/Contents/Resources/ 2>/dev/null || :
+          echo "Windows Build" > build/steverator_artefacts/Release/VST3/Steverator.vst3/Contents/Resources/version.txt
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Steverator_Windows_VST3
-          path: build/Source/steverator_artefacts/Release/VST3/Steverator.vst3
+          path: build/steverator_artefacts/Release/VST3/Steverator.vst3
 
   build_mac:
     name: Build macOS (VST3)
@@ -70,4 +70,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Steverator_Mac_VST3
-          path: build/Source/steverator_artefacts/Release/VST3/Steverator.vst3
+          path: build/steverator_artefacts/Release/VST3/Steverator.vst3
