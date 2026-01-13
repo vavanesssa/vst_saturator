@@ -180,11 +180,7 @@ void Vst_saturatorAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     limiter.prepare(spec);
     limiter.reset();
 
-    // 4. Prepare DC Blocker
-    dcBlocker.prepare(spec);
-    dcBlocker.reset();
-
-    // 5. Resize internal buffers
+    // 4. Resize internal buffers
     lowBuffer.setSize(spec.numChannels, spec.maximumBlockSize);
     midBuffer.setSize(spec.numChannels, spec.maximumBlockSize);
     highBuffer.setSize(spec.numChannels, spec.maximumBlockSize);
@@ -239,18 +235,18 @@ void Vst_saturatorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     bool lowEnable = *apvts.getRawParameterValue("lowEnable");
     float lowFreq = *apvts.getRawParameterValue("lowFreq");
     float lowWarmth = *apvts.getRawParameterValue("lowWarmth");
-    float lowLevel = juce::Decibels::decibelsToGain(*apvts.getRawParameterValue("lowLevel"));
+    float lowLevel = juce::Decibels::decibelsToGain(apvts.getRawParameterValue("lowLevel")->load());
 
     // High Band
     bool highEnable = *apvts.getRawParameterValue("highEnable");
     float highFreq = *apvts.getRawParameterValue("highFreq");
     float highSoftness = *apvts.getRawParameterValue("highSoftness");
-    float highLevel = juce::Decibels::decibelsToGain(*apvts.getRawParameterValue("highLevel"));
+    float highLevel = juce::Decibels::decibelsToGain(apvts.getRawParameterValue("highLevel")->load());
 
     // Gain & Routing
-    float inputGain = juce::Decibels::decibelsToGain(*apvts.getRawParameterValue("inputGain"));
+    float inputGain = juce::Decibels::decibelsToGain(apvts.getRawParameterValue("inputGain")->load());
     float mix = *apvts.getRawParameterValue("mix") / 100.0f;
-    float outputGain = juce::Decibels::decibelsToGain(*apvts.getRawParameterValue("output"));
+    float outputGain = juce::Decibels::decibelsToGain(apvts.getRawParameterValue("output")->load());
     bool prePost = *apvts.getRawParameterValue("prePost");
     bool limiterEnable = *apvts.getRawParameterValue("limiter");
 
@@ -333,7 +329,6 @@ void Vst_saturatorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
                     data[i] = x + (x * std::abs(x)) * lowWarmth;
                 }
             }
-            dcBlocker.process(juce::dsp::ProcessContextReplacing<float>(lowBlock));
             lowBuffer.applyGain(lowLevel);
         }
 
@@ -369,7 +364,18 @@ void Vst_saturatorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
         // 2. Then apply oversampled saturation
         juce::dsp::AudioBlock<float> block(buffer);
         juce::dsp::AudioBlock<float> oversampledBlock = oversampling.processSamplesUp(block);
-        processSaturation(oversampledBlock.getAudioBuffer());
+        // Apply saturation directly to the oversampled block
+        for (int channel = 0; channel < (int)oversampledBlock.getNumChannels(); ++channel)
+        {
+            auto* channelData = oversampledBlock.getChannelPointer(channel);
+            for (size_t sample = 0; sample < oversampledBlock.getNumSamples(); ++sample)
+            {
+                float x = channelData[sample] * juce::Decibels::decibelsToGain(saturation);
+                float soft = std::tanh(x * (1.0f - shape * 0.5f));
+                float hard = (x - x*x*x/3.0f);
+                channelData[sample] = soft * (1.0f - shape) + hard * shape;
+            }
+        }
         oversampling.processSamplesDown(block);
     }
     else // Pre: Saturation -> EQ
@@ -377,7 +383,18 @@ void Vst_saturatorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
         // 1. Apply oversampled saturation first
         juce::dsp::AudioBlock<float> block(buffer);
         juce::dsp::AudioBlock<float> oversampledBlock = oversampling.processSamplesUp(block);
-        processSaturation(oversampledBlock.getAudioBuffer());
+        // Apply saturation directly to the oversampled block
+        for (int channel = 0; channel < (int)oversampledBlock.getNumChannels(); ++channel)
+        {
+            auto* channelData = oversampledBlock.getChannelPointer(channel);
+            for (size_t sample = 0; sample < oversampledBlock.getNumSamples(); ++sample)
+            {
+                float x = channelData[sample] * juce::Decibels::decibelsToGain(saturation);
+                float soft = std::tanh(x * (1.0f - shape * 0.5f));
+                float hard = (x - x*x*x/3.0f);
+                channelData[sample] = soft * (1.0f - shape) + hard * shape;
+            }
+        }
         oversampling.processSamplesDown(block);
 
         // 2. Then process bands

@@ -3,7 +3,7 @@ PASSWORD="aaaa"
 BUILD_HASH=$(openssl rand -hex 3 | cut -c1-5 | tr '[:lower:]' '[:upper:]')
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
-echo "🔨 Building vst_saturator (Standalone + VST3)..."
+echo "🔨 Building steverator (Standalone + VST3)..."
 echo "📦 BUILD HASH: $BUILD_HASH"
 echo ""
 
@@ -23,13 +23,13 @@ echo ""
 echo "✨ BUILD COMPLETE! Hash: $BUILD_HASH"
 echo ""
 
-STANDALONE_APP="build/vst_saturator_artefacts/Release/Standalone/vst_saturator.app"
+STANDALONE_APP="build/steverator_artefacts/Release/Standalone/steverator.app"
 
 # Copy version.txt and PNG images to both VST3 and Standalone Resources
-cp Assets/version.txt "build/vst_saturator_artefacts/Release/Standalone/vst_saturator.app/Contents/Resources/" 2>/dev/null || true
-cp Assets/*.png "build/vst_saturator_artefacts/Release/Standalone/vst_saturator.app/Contents/Resources/" 2>/dev/null || true
-cp Assets/version.txt "build/vst_saturator_artefacts/Release/VST3/vst_saturator.vst3/Contents/Resources/" 2>/dev/null || true
-cp Assets/*.png "build/vst_saturator_artefacts/Release/VST3/vst_saturator.vst3/Contents/Resources/" 2>/dev/null || true
+cp Assets/version.txt "build/steverator_artefacts/Release/Standalone/steverator.app/Contents/Resources/" 2>/dev/null || true
+cp Assets/*.png "build/steverator_artefacts/Release/Standalone/steverator.app/Contents/Resources/" 2>/dev/null || true
+cp Assets/version.txt "build/steverator_artefacts/Release/VST3/steverator.vst3/Contents/Resources/" 2>/dev/null || true
+cp Assets/*.png "build/steverator_artefacts/Release/VST3/steverator.vst3/Contents/Resources/" 2>/dev/null || true
 
 echo "✓ version.txt and PNG images copied to Resources"
 echo ""
@@ -47,5 +47,5 @@ else
     echo "   $STANDALONE_APP"
     echo ""
     echo "Checking what was built..."
-    ls -la build/vst_saturator_artefacts/Release/Standalone/ 2>/dev/null || echo "No Standalone folder found"
+    ls -la build/steverator_artefacts/Release/Standalone/ 2>/dev/null || echo "No Standalone folder found"
 fi

@@ -101,9 +101,6 @@ private:
     // Soft Limiter
     juce::dsp::Limiter<float> limiter;
 
-    // DC Blocker for the low band
-    juce::dsp::DCBlocker<float> dcBlocker;
-
     // Oversampling for non-aliased saturation
     juce::dsp::Oversampling<float> oversampling;
 

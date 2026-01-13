@@ -21,7 +21,8 @@
 #include "CustomLookAndFeel.h"
 
 //==============================================================================
-class Vst_saturatorAudioProcessorEditor  : public juce::AudioProcessorEditor
+class Vst_saturatorAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                           private juce::Timer
 {
 public:
     // Constructor: Takes a reference to the Processor so we can access parameters.
@@ -37,8 +38,21 @@ public:
     // Called when the window is resized. Position your components here.
     void resized() override;
 
+    // Timer callback for periodic repaints
+    void timerCallback() override;
+
 private:
     Vst_saturatorAudioProcessor& audioProcessor;
+
+    // === GLOBAL SCALING CONSTANTS ===
+    // Fixed design size - all UI elements use these coordinates
+    static constexpr int DESIGN_WIDTH = 1300;
+    static constexpr int DESIGN_HEIGHT = 850;
+
+    // Scaling variables (calculated on resize)
+    float scaleFactor = 1.0f;
+    int offsetX = 0;
+    int offsetY = 0;
 
     // A. Saturation Globale
     juce::Slider saturationSlider, shapeSlider;
@@ -78,11 +92,11 @@ private:
     // Custom UI styling
     CustomLookAndFeel customLookAndFeel;
 
-    // Background image
-    juce::Image backgroundImage;
-    juce::Image scaledBackgroundImage;
-    int lastScaledWidth = 0;
-    int lastScaledHeight = 0;
+    // Steve image for left side display
+    juce::Image steveImage;
+
+    // Build hash for display
+    juce::String buildHash;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Vst_saturatorAudioProcessorEditor)
 };

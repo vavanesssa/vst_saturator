@@ -1,6 +1,6 @@
 # 📘 VST Saturator — Build & Installation Guide
 
-This guide explains how to set up your environment, build the `vst_saturator` plugin, and install it on your machine.
+This guide explains how to set up your environment, build the `steverator` plugin, and install it on your machine.
 
 ---
 
@@ -38,8 +38,8 @@ Since this project uses JUCE as a submodule, you must clone it recursively or in
 
 **Option A: Clone with submodules (Recommended)**
 ```bash
-git clone --recursive https://github.com/your-username/vst_saturator.git
-cd vst_saturator
+git clone --recursive https://github.com/your-username/steverator.git
+cd steverator
 ```
 
 **Option B: If you already cloned without `--recursive`**
@@ -66,14 +66,14 @@ We use CMake to build the project. This is platform-agnostic.
     ```
 
 2.  **Build:**
-    You can either open the generated `vst_saturator.xcodeproj` in Xcode and click "Build", or run:
+    You can either open the generated `steverator.xcodeproj` in Xcode and click "Build", or run:
     ```bash
     cmake --build . --config Release
     ```
 
 3.  **Locate the Artifact:**
     The compiled VST3 file will be located in:
-    `build/vst_saturator_artefacts/Release/vst3/vst_saturator.vst3`
+    `build/steverator_artefacts/Release/vst3/steverator.vst3`
 
 ### Windows (PowerShell / Command Prompt)
 
@@ -85,13 +85,13 @@ We use CMake to build the project. This is platform-agnostic.
     ```
 
 2.  **Build:**
-    You can open the generated `vst_saturator.sln` in Visual Studio, or run:
+    You can open the generated `steverator.sln` in Visual Studio, or run:
     ```bash
     cmake --build . --config Release
     ```
 
 3.  **Locate the Artifact:**
-    `build/vst_saturator_artefacts/Release/vst3/vst_saturator.vst3`
+    `build/steverator_artefacts/Release/vst3/steverator.vst3`
 
 ---
 
@@ -100,12 +100,12 @@ We use CMake to build the project. This is platform-agnostic.
 To use the plugin in your DAW (Ableton, Logic, Reaper, etc.), you need to move the `.vst3` file to the system's plugin folder.
 
 ### macOS
-Move `vst_saturator.vst3` to:
+Move `steverator.vst3` to:
 `/Library/Audio/Plug-Ins/VST3/`
 *(Or `~/Library/Audio/Plug-Ins/VST3/` for user-only install)*
 
 ### Windows
-Move `vst_saturator.vst3` to:
+Move `steverator.vst3` to:
 `C:\Program Files\Common Files\VST3\`
 
 ---

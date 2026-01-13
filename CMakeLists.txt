@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 # -----------------------------------------------------------------------------
 # 🏷️ Project Definition
 # -----------------------------------------------------------------------------
-project(vst_saturator VERSION 0.0.1)
+project(steverator VERSION 0.0.1)
 
 # Build Universal Binary (Apple Silicon + Intel) for maximum compatibility
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
@@ -32,19 +32,19 @@ add_custom_target(copy_assets ALL
 # -----------------------------------------------------------------------------
 # 'juce_add_plugin' is a helper function from JUCE.
 # It sets up the target, links libraries, and handles VST3/AU packaging.
-juce_add_plugin(vst_saturator
+juce_add_plugin(steverator
     # The company name (shows up in DAW)
-    COMPANY_NAME "MyEducationalPlugins"
+    COMPANY_NAME "NeiXXa"
     # The plugin code (must be unique 4 chars)
-    PLUGIN_CODE "VsEd"
+    PLUGIN_CODE "STEV"
     # Manufacturer code (must be unique 4 chars)
     MANUFACTURER_CODE "MyEd"
     # Bundle Identifier (Important for macOS)
-    BUNDLE_ID "com.myeducationalplugins.vst_saturator"
+    BUNDLE_ID "com.myeducationalplugins.steverator"
     # Formats to build
     FORMATS VST3 Standalone
     # Name of the product
-    PRODUCT_NAME "vst_saturator"
+    PRODUCT_NAME "Steverator"
     # Plugin Type (Effect, Synth, etc.)
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
@@ -58,7 +58,7 @@ juce_add_plugin(vst_saturator
 # 📄 Source Files
 # -----------------------------------------------------------------------------
 # We list the C++ files that make up our plugin.
-target_sources(vst_saturator
+target_sources(steverator
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
@@ -72,7 +72,7 @@ target_sources(vst_saturator
 # 📚 Linking Dependencies
 # -----------------------------------------------------------------------------
 # We link the necessary JUCE modules.
-target_link_libraries(vst_saturator
+target_link_libraries(steverator
     PRIVATE
         # Base JUCE functionality (Strings, Files, etc.)
         juce::juce_core
@@ -98,17 +98,17 @@ target_link_libraries(vst_saturator
 # ⚙️ Compiler Settings
 # -----------------------------------------------------------------------------
 # We want to use modern C++ (C++17 or 20)
-target_compile_features(vst_saturator PUBLIC cxx_std_17)
+target_compile_features(steverator PUBLIC cxx_std_17)
 
 # Enable strict warnings to help us write better code
 if(MSVC)
-    target_compile_options(vst_saturator PRIVATE /W4)
+    target_compile_options(steverator PRIVATE /W4)
 else()
-    target_compile_options(vst_saturator PRIVATE -Wall -Wextra)
+    target_compile_options(steverator PRIVATE -Wall -Wextra)
 endif()
 
 # -----------------------------------------------------------------------------
 # 📁 Binary Output
 # -----------------------------------------------------------------------------
 # This ensures the VST3 bundle is copied to a convenient location
-juce_generate_juce_header(vst_saturator)
+juce_generate_juce_header(steverator)

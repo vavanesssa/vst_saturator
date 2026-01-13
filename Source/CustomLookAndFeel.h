@@ -22,7 +22,7 @@ public:
     CustomLookAndFeel();
     ~CustomLookAndFeel() override = default;
 
-    // Draw the rotary slider (knob) using a custom image
+    // Draw the rotary slider (knob) with minimal design
     void drawRotarySlider(juce::Graphics& g,
                          int x, int y, int width, int height,
                          float sliderPosProportional,
@@ -30,14 +30,12 @@ public:
                          float rotaryEndAngle,
                          juce::Slider& slider) override;
 
+    // Draw toggle buttons with glowy violet style
+    void drawToggleButton(juce::Graphics& g,
+                         juce::ToggleButton& button,
+                         bool isMouseOverButton,
+                         bool isButtonDown) override;
+
 private:
-    juce::Image knobImage;
-
-    // Cache for resized knob images to avoid regenerating them constantly
-    std::map<int, juce::Image> resizedKnobCache;
-
-    // Helper function to get or create a resized version of the knob
-    juce::Image getResizedKnob(int targetSize);
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomLookAndFeel)
 };
