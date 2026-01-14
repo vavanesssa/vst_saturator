@@ -118,6 +118,35 @@ private:
   std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>
       deltaGainAttachment;
 
+  // F. Presets Menu
+  juce::ComboBox presetsCombo;
+  juce::Label presetsLabel;
+
+  // Preset data structure
+  struct PresetData {
+    juce::String name;
+    int waveshape;    // 1-18
+    float drive;      // 0-24
+    float shape;      // 0-1
+    float inputGain;  // -24 to +24
+    float mix;        // 0-100
+    float outputGain; // -24 to +24
+    bool lowEnable;
+    float lowFreq;   // 20-500
+    float lowWarmth; // 0-1
+    float lowLevel;  // 0-12
+    bool highEnable;
+    float highFreq;     // 500-16000
+    float highSoftness; // 0-1
+    float highLevel;    // 0-12
+    bool limiter;
+    bool prePost;
+  };
+
+  std::vector<PresetData> presets;
+  void initializePresets();
+  void applyPreset(int presetIndex);
+
   // Custom UI styling
   CustomLookAndFeel customLookAndFeel;
 

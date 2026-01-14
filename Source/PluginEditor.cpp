@@ -283,6 +283,28 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
   deltaGainLabel.attachToComponent(&deltaGainSlider, false);
   attachSlider(deltaGainAttachment, "deltaGain", deltaGainSlider);
 
+  // F. Presets Menu (Top-Left)
+  initializePresets(); // Load all 30 presets
+
+  presetsCombo.addItem("-- Presets --", 1000); // Placeholder item
+  for (int i = 0; i < static_cast<int>(presets.size()); ++i) {
+    presetsCombo.addItem(presets[static_cast<size_t>(i)].name, i + 1);
+  }
+  presetsCombo.setSelectedId(
+      1000, juce::dontSendNotification); // Default to placeholder
+  presetsCombo.setLookAndFeel(&customLookAndFeel);
+  presetsCombo.setTooltip(juce::CharPointer_UTF8(
+      "Sélectionnez un preset pour charger des réglages prédéfinis"));
+  presetsCombo.onChange = [this]() {
+    int selectedId = presetsCombo.getSelectedId();
+    if (selectedId != 1000 && selectedId > 0) {
+      applyPreset(selectedId - 1);
+      // Reset to placeholder after applying
+      presetsCombo.setSelectedId(1000, juce::dontSendNotification);
+    }
+  };
+  addAndMakeVisible(presetsCombo);
+
   // Set initial size to design size
   // Enable resizing with constraints (min 650x425 = 50% of design, max
   // 2600x1700 = 200% of design)
@@ -423,6 +445,9 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   // === APPLY SCALED BOUNDS TO ALL COMPONENTS ===
   // All coordinates are in design space (1300x850), transformed to window space
 
+  // PRESETS MENU (Top-Left corner, above Steve image)
+  presetsCombo.setBounds(scaleDesignBounds(20, 20, 220, 40));
+
   // COLUMN 1: INPUT + OUTPUT
   inputGainSlider.setBounds(
       scaleDesignBounds(col1X + 5, row2Y, knobWidth, knobHeight));
@@ -491,4 +516,165 @@ void Vst_saturatorAudioProcessorEditor::resized() {
 void Vst_saturatorAudioProcessorEditor::timerCallback() {
   // Timer is used to trigger repaints to show updated knob values
   repaint();
+}
+
+//==============================================================================
+// PRESETS SYSTEM
+//==============================================================================
+
+void Vst_saturatorAudioProcessorEditor::initializePresets() {
+  // Clear any existing presets
+  presets.clear();
+
+  // ============ CLASSICS (1-6) ============
+  presets.push_back({"Warm Tape", 16, 6.0f, 0.4f, 0.0f, 75.0f, 0.0f, true,
+                     120.0f, 0.5f, 2.0f, true, 4000.0f, 0.6f, 1.0f, true,
+                     false});
+  presets.push_back({"Tube Glow", 1, 8.0f, 0.3f, 0.0f, 80.0f, -1.0f, true,
+                     100.0f, 0.6f, 3.0f, true, 6000.0f, 0.4f, 2.0f, true,
+                     false});
+  presets.push_back({"Soft Clip", 2, 5.0f, 0.5f, 0.0f, 70.0f, 0.0f, false,
+                     80.0f, 0.3f, 0.0f, false, 3000.0f, 0.5f, 0.0f, false,
+                     false});
+  presets.push_back({"Vintage Console", 1, 4.0f, 0.2f, 2.0f, 60.0f, -2.0f, true,
+                     150.0f, 0.4f, 1.5f, true, 8000.0f, 0.7f, 1.0f, true,
+                     true});
+  presets.push_back({"Analog Warmth", 18, 3.0f, 0.3f, 0.0f, 50.0f, 0.0f, true,
+                     100.0f, 0.5f, 2.0f, true, 5000.0f, 0.5f, 1.5f, false,
+                     false});
+  presets.push_back({"Classic Overdrive", 17, 10.0f, 0.4f, 0.0f, 85.0f, -2.0f,
+                     true, 80.0f, 0.3f, 1.0f, true, 4500.0f, 0.3f, 1.5f, true,
+                     false});
+
+  // ============ MUSIC STYLES (7-12) ============
+  presets.push_back({"Hip-Hop Low End", 1, 7.0f, 0.2f, 3.0f, 65.0f, 0.0f, true,
+                     200.0f, 0.8f, 4.0f, false, 2000.0f, 0.5f, 0.0f, true,
+                     false});
+  presets.push_back({"EDM Punch", 3, 12.0f, 0.6f, 2.0f, 90.0f, -3.0f, true,
+                     100.0f, 0.4f, 3.0f, true, 6000.0f, 0.2f, 2.5f, true,
+                     true});
+  presets.push_back({"Rock Crunch", 17, 14.0f, 0.5f, 0.0f, 100.0f, -4.0f, true,
+                     150.0f, 0.3f, 2.0f, true, 5000.0f, 0.3f, 2.0f, true,
+                     false});
+  presets.push_back({"Jazz Warmth", 1, 3.0f, 0.2f, 0.0f, 40.0f, 0.0f, true,
+                     80.0f, 0.6f, 1.5f, true, 7000.0f, 0.8f, 0.5f, false,
+                     false});
+  presets.push_back({"Lo-Fi Beats", 9, 8.0f, 0.7f, -2.0f, 70.0f, 0.0f, true,
+                     300.0f, 0.6f, 2.0f, true, 3000.0f, 0.9f, -1.0f, false,
+                     true});
+  presets.push_back({"Metal Aggression", 3, 20.0f, 0.8f, 4.0f, 100.0f, -6.0f,
+                     true, 120.0f, 0.2f, 3.0f, true, 4000.0f, 0.1f, 3.5f, true,
+                     true});
+
+  // ============ INSTRUMENTS (13-20) ============
+  presets.push_back({"Bass Growl", 4, 9.0f, 0.4f, 2.0f, 80.0f, -1.0f, true,
+                     250.0f, 0.7f, 4.0f, false, 1500.0f, 0.6f, 0.0f, true,
+                     false});
+  presets.push_back({"Vocal Warmth", 18, 4.0f, 0.3f, 0.0f, 45.0f, 1.0f, false,
+                     100.0f, 0.4f, 0.0f, true, 8000.0f, 0.7f, 1.0f, false,
+                     true});
+  presets.push_back({"Drums Punch", 2, 8.0f, 0.5f, 3.0f, 75.0f, -2.0f, true,
+                     80.0f, 0.3f, 2.5f, true, 6000.0f, 0.4f, 2.0f, true, true});
+  presets.push_back({"Guitar Amp", 15, 11.0f, 0.6f, 0.0f, 90.0f, -3.0f, true,
+                     100.0f, 0.4f, 1.5f, true, 5000.0f, 0.3f, 2.5f, true,
+                     false});
+  presets.push_back({"Synth Edge", 12, 7.0f, 0.7f, 1.0f, 70.0f, 0.0f, true,
+                     60.0f, 0.2f, 1.0f, true, 7000.0f, 0.3f, 3.0f, false,
+                     true});
+  presets.push_back({"Piano Glue", 1, 2.5f, 0.2f, 0.0f, 35.0f, 0.0f, true,
+                     100.0f, 0.4f, 1.0f, true, 6000.0f, 0.6f, 0.5f, false,
+                     false});
+  presets.push_back({"Strings Silk", 16, 3.0f, 0.3f, 0.0f, 40.0f, 0.5f, false,
+                     150.0f, 0.5f, 0.0f, true, 8000.0f, 0.8f, 1.0f, false,
+                     false});
+  presets.push_back({"Horns Presence", 1, 5.0f, 0.4f, 1.0f, 55.0f, 0.0f, true,
+                     200.0f, 0.3f, 1.5f, true, 5000.0f, 0.4f, 2.0f, false,
+                     true});
+
+  // ============ CREATIVE / FX (21-26) ============
+  presets.push_back({"Bitcrushed", 9, 15.0f, 0.9f, 0.0f, 80.0f, -4.0f, false,
+                     100.0f, 0.5f, 0.0f, false, 4000.0f, 0.5f, 0.0f, true,
+                     true});
+  presets.push_back({"Fuzz Box", 4, 18.0f, 0.7f, 3.0f, 95.0f, -5.0f, true,
+                     80.0f, 0.5f, 2.0f, true, 3500.0f, 0.2f, 2.5f, true,
+                     false});
+  presets.push_back({"Wave Folder", 6, 10.0f, 0.6f, 0.0f, 85.0f, -3.0f, true,
+                     100.0f, 0.3f, 1.0f, true, 5000.0f, 0.4f, 1.5f, true,
+                     true});
+  presets.push_back({"Sin Fold", 7, 12.0f, 0.8f, 0.0f, 75.0f, -4.0f, true,
+                     120.0f, 0.4f, 1.5f, true, 6000.0f, 0.3f, 2.0f, true,
+                     false});
+  presets.push_back({"Rectifier", 11, 8.0f, 0.5f, 0.0f, 70.0f, -2.0f, true,
+                     100.0f, 0.4f, 2.0f, true, 4500.0f, 0.5f, 1.5f, true,
+                     true});
+  presets.push_back({"Extreme Destroy", 3, 24.0f, 1.0f, 6.0f, 100.0f, -8.0f,
+                     true, 50.0f, 0.2f, 4.0f, true, 3000.0f, 0.1f, 4.0f, true,
+                     true});
+
+  // ============ MASTERING / SUBTLE (27-30) ============
+  presets.push_back({"Master Glue", 18, 2.0f, 0.15f, 0.0f, 25.0f, 0.0f, true,
+                     80.0f, 0.4f, 0.5f, true, 10000.0f, 0.7f, 0.5f, true,
+                     false});
+  presets.push_back({"Parallel Crush", 2, 12.0f, 0.5f, 0.0f, 30.0f, 0.0f, true,
+                     100.0f, 0.5f, 2.0f, true, 5000.0f, 0.4f, 1.5f, true,
+                     true});
+  presets.push_back({"Subtle Harmonics", 1, 1.5f, 0.1f, 0.0f, 20.0f, 0.5f, true,
+                     100.0f, 0.3f, 0.5f, true, 8000.0f, 0.6f, 0.5f, false,
+                     false});
+  presets.push_back({"Bus Warmth", 16, 4.0f, 0.25f, 0.0f, 40.0f, -0.5f, true,
+                     120.0f, 0.5f, 1.5f, true, 7000.0f, 0.6f, 1.0f, true,
+                     false});
+}
+
+void Vst_saturatorAudioProcessorEditor::applyPreset(int presetIndex) {
+  if (presetIndex < 0 || presetIndex >= static_cast<int>(presets.size()))
+    return;
+
+  const auto &p = presets[static_cast<size_t>(presetIndex)];
+
+  // Apply all parameter values using the APVTS
+  auto &apvts = audioProcessor.apvts;
+
+  // Waveshape (ComboBox - 1-indexed)
+  if (auto *param = apvts.getParameter("waveshape"))
+    param->setValueNotifyingHost(
+        param->convertTo0to1(static_cast<float>(p.waveshape)));
+
+  // Global controls
+  if (auto *param = apvts.getParameter("drive"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.drive));
+  if (auto *param = apvts.getParameter("shape"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.shape));
+  if (auto *param = apvts.getParameter("inputGain"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.inputGain));
+  if (auto *param = apvts.getParameter("mix"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.mix));
+  if (auto *param = apvts.getParameter("output"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.outputGain));
+
+  // Low band
+  if (auto *param = apvts.getParameter("lowEnable"))
+    param->setValueNotifyingHost(p.lowEnable ? 1.0f : 0.0f);
+  if (auto *param = apvts.getParameter("lowFreq"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.lowFreq));
+  if (auto *param = apvts.getParameter("lowWarmth"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.lowWarmth));
+  if (auto *param = apvts.getParameter("lowLevel"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.lowLevel));
+
+  // High band
+  if (auto *param = apvts.getParameter("highEnable"))
+    param->setValueNotifyingHost(p.highEnable ? 1.0f : 0.0f);
+  if (auto *param = apvts.getParameter("highFreq"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.highFreq));
+  if (auto *param = apvts.getParameter("highSoftness"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.highSoftness));
+  if (auto *param = apvts.getParameter("highLevel"))
+    param->setValueNotifyingHost(param->convertTo0to1(p.highLevel));
+
+  // Routing
+  if (auto *param = apvts.getParameter("limiter"))
+    param->setValueNotifyingHost(p.limiter ? 1.0f : 0.0f);
+  if (auto *param = apvts.getParameter("prePost"))
+    param->setValueNotifyingHost(p.prePost ? 1.0f : 0.0f);
 }
