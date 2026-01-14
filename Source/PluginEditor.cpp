@@ -266,6 +266,23 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
   addAndMakeVisible(bypassButton);
   attachButton(bypassAttachment, "bypass", bypassButton);
 
+  // E. Delta Monitoring
+  deltaButton.setButtonText("DELTA");
+  deltaButton.setLookAndFeel(&customLookAndFeel);
+  deltaButton.setTooltip(
+      juce::CharPointer_UTF8("Mode Delta: écouter uniquement les harmoniques "
+                             "ajoutées par la saturation (wet - dry)"));
+  addAndMakeVisible(deltaButton);
+  attachButton(deltaAttachment, "delta", deltaButton);
+
+  configureSlider(
+      deltaGainSlider, "deltaGain",
+      juce::CharPointer_UTF8(
+          "Gain du signal Delta (réduction de niveau pour la sécurité audio)"));
+  configureLabel(deltaGainLabel, "Δ Gain");
+  deltaGainLabel.attachToComponent(&deltaGainSlider, false);
+  attachSlider(deltaGainAttachment, "deltaGain", deltaGainSlider);
+
   // Set initial size to design size
   // Enable resizing with constraints (min 650x425 = 50% of design, max
   // 2600x1700 = 200% of design)
@@ -442,18 +459,31 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   mixSlider.setBounds(
       scaleDesignBounds(col4X + 5, row3Y, knobWidth, knobHeight));
 
-  // === FOOTER BUTTONS (centered) ===
-  const int footerContentWidth = footerButtonWidth * 3 + columnSpacing;
-  const int footerStartX = (DESIGN_WIDTH - footerContentWidth) / 2;
+  // === FOOTER BUTTONS (centered with delta) ===
+  // Layout: [Bypass] [Limiter] [Pre/Post] [DELTA] [Δ Gain knob]
+  const int deltaKnobWidth = 80; // Smaller knob for delta gain
+  const int deltaKnobHeight = 80;
+  const int footerTotalWidth =
+      footerButtonWidth * 4 + columnSpacing * 1.5 + deltaKnobWidth;
+  const int footerStartX = (DESIGN_WIDTH - footerTotalWidth) / 2;
 
   bypassButton.setBounds(scaleDesignBounds(
       footerStartX, footerY, footerButtonWidth, footerButtonHeight));
   limiterButton.setBounds(
-      scaleDesignBounds(footerStartX + footerButtonWidth + columnSpacing / 2,
+      scaleDesignBounds(footerStartX + footerButtonWidth + columnSpacing / 3,
                         footerY, footerButtonWidth, footerButtonHeight));
   prePostButton.setBounds(scaleDesignBounds(
-      footerStartX + (footerButtonWidth + columnSpacing / 2) * 2, footerY,
+      footerStartX + (footerButtonWidth + columnSpacing / 3) * 2, footerY,
       footerButtonWidth, footerButtonHeight));
+  deltaButton.setBounds(scaleDesignBounds(
+      footerStartX + (footerButtonWidth + columnSpacing / 3) * 3, footerY,
+      footerButtonWidth, footerButtonHeight));
+
+  // Delta Gain knob (small, positioned after Delta button)
+  deltaGainSlider.setBounds(scaleDesignBounds(
+      footerStartX + (footerButtonWidth + columnSpacing / 3) * 4 + 10,
+      footerY - 10, // Slightly higher to account for label
+      deltaKnobWidth, deltaKnobHeight));
 
   repaint();
 }

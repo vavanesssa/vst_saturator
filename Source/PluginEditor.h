@@ -109,6 +109,15 @@ private:
   std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>
       bypassAttachment;
 
+  // E. Delta Monitoring
+  juce::ToggleButton deltaButton;
+  juce::Slider deltaGainSlider;
+  juce::Label deltaGainLabel;
+  std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>
+      deltaAttachment;
+  std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>
+      deltaGainAttachment;
+
   // Custom UI styling
   CustomLookAndFeel customLookAndFeel;
 

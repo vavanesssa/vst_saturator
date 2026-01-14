@@ -114,6 +114,15 @@ Apply soft saturation to the incoming audio signal with independent control of l
 *   **Limiter**: Soft limiter on output
 *   **Bypass**: Full effect bypass
 
+**Delta Monitor (Harmonics Isolation):**
+*   **DELTA**: Toggle delta monitoring mode - outputs **only the harmonics** added by saturation (wet - dry)
+    - Useful for precisely tuning saturation settings by hearing only the distortion
+    - Ignores Mix parameter when active (uses 100% wet for calculation)
+    - Includes ~10ms crossfade for click-free transitions
+*   **Δ Gain (Delta Gain)**: Pre-limiter gain for delta signal (-24 to 0 dB, default: -12 dB)
+    - Safety feature to prevent loud output (harmonics can be very loud)
+    - Uses tanh soft clipper for additional protection
+
 All parameters are:
 *   Automatable in the DAW.
 *   Visible and editable via the UI.
