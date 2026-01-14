@@ -50,88 +50,31 @@ void CustomLookAndFeel::ensureImageLoaded() {
 
 void CustomLookAndFeel::ensureFontLoaded() {
   if (customTypeface == nullptr) {
-    DBG("=== FONT LOADING DEBUG ===");
-    DBG("Attempting to load from BinaryData...");
+    // Direct access to BinaryData is most reliable
+    customTypeface = juce::Typeface::createSystemTypefaceFor(
+        BinaryData::NanumPenScriptRegular_ttf,
+        (size_t)BinaryData::NanumPenScriptRegular_ttfSize);
 
-    // First try to load from embedded BinaryData (most reliable)
-    int dataSize = 0;
-    const char *fontData =
-        BinaryData::getNamedResource("NanumPenScriptRegular_ttf", dataSize);
-
-    if (fontData != nullptr && dataSize > 0) {
-      DBG("✓ Found font in BinaryData: " + juce::String(dataSize) + " bytes");
-      customTypeface =
-          juce::Typeface::createSystemTypefaceFor(fontData, (size_t)dataSize);
-      if (customTypeface != nullptr) {
-        DBG("✓✓✓ FONT LOADED SUCCESSFULLY FROM BINARYDATA! Name: " +
-            customTypeface->getName());
-        return;
-      } else {
-        DBG("✗ Failed to create typeface from BinaryData");
-      }
-    } else {
-      DBG("⚠ Font not found in BinaryData, trying filesystem...");
+    if (customTypeface != nullptr) {
+      return;
     }
 
-    // Fallback: Try to load from filesystem
-    juce::File fontFile;
-    auto appDir =
-        juce::File::getSpecialLocation(juce::File::currentApplicationFile);
+    // Fallback: Try to load from filesystem if BinaryData fails (unlikely)
+    juce::File fontFile =
+        juce::File::getSpecialLocation(juce::File::currentApplicationFile)
+            .getChildFile("Contents/Resources/NanumPenScript-Regular.ttf");
 
-    // Try paths
-    juce::File path1 =
-        appDir.getChildFile("Contents/Resources/NanumPenScript-Regular.ttf");
-    juce::File path2 =
-        appDir.getParentDirectory().getParentDirectory().getChildFile(
-            "Resources/NanumPenScript-Regular.ttf");
-    juce::File path3 = juce::File("/Users/vava/Documents/GitHub/vst_saturator/"
-                                  "Assets/NanumPenScript-Regular.ttf");
-    juce::File path4 =
-        juce::File("/Users/vava/Documents/GitHub/vst_saturator/"
-                   "NanumPenScript-Regular.ttf"); // Root fallback
-
-    DBG("Path 1 exists: " + juce::String(path1.existsAsFile() ? "YES" : "NO") +
-        " - " + path1.getFullPathName());
-    DBG("Path 2 exists: " + juce::String(path2.existsAsFile() ? "YES" : "NO") +
-        " - " + path2.getFullPathName());
-    DBG("Path 3 exists: " + juce::String(path3.existsAsFile() ? "YES" : "NO") +
-        " - " + path3.getFullPathName());
-    DBG("Path 4 exists: " + juce::String(path4.existsAsFile() ? "YES" : "NO") +
-        " - " + path4.getFullPathName());
-
-    if (path1.existsAsFile())
-      fontFile = path1;
-    else if (path2.existsAsFile())
-      fontFile = path2;
-    else if (path3.existsAsFile())
-      fontFile = path3;
-    else if (path4.existsAsFile())
-      fontFile = path4;
+    if (!fontFile.existsAsFile()) {
+      fontFile = juce::File("/Users/vava/Documents/GitHub/vst_saturator/"
+                            "Assets/NanumPenScript-Regular.ttf");
+    }
 
     if (fontFile.existsAsFile()) {
-      DBG("✓ Font file found: " + fontFile.getFullPathName());
-      juce::FileInputStream stream(fontFile);
-      if (stream.openedOk()) {
-        juce::MemoryBlock mb;
-        stream.readIntoMemoryBlock(mb);
-        DBG("✓ File loaded into memory: " + juce::String(mb.getSize()) +
-            " bytes");
-        customTypeface =
-            juce::Typeface::createSystemTypefaceFor(mb.getData(), mb.getSize());
-        if (customTypeface != nullptr) {
-          DBG("✓✓✓ FONT LOADED SUCCESSFULLY FROM FILE! Name: " +
-              customTypeface->getName());
-        } else {
-          DBG("✗✗✗ FAILED to create typeface from file memory!");
-        }
-      } else {
-        DBG("✗ Failed to open file stream");
-      }
-    } else {
-      DBG("✗✗✗ NO FONT FILE FOUND IN ANY PATH!");
+      juce::MemoryBlock mb;
+      fontFile.loadFileAsData(mb);
+      customTypeface =
+          juce::Typeface::createSystemTypefaceFor(mb.getData(), mb.getSize());
     }
-  } else {
-    DBG("Font already loaded: " + customTypeface->getName());
   }
 }
 
@@ -140,11 +83,12 @@ juce::Font CustomLookAndFeel::getCustomFont(float height, int style) {
   if (customTypeface != nullptr) {
     juce::Font font(customTypeface);
     font = font.withHeight(height);
-    if (style != juce::Font::plain)
-      font = font.withStyle(style);
+    // Note: Nanum Pen Script doesn't have a bold version.
+    // If we force bold, JUCE might switch to a default font or synthesize it
+    // poorly. We'll ignore the style and always use the custom typeface
+    // properly.
     return font;
   }
-  DBG("⚠ WARNING: Using fallback font (custom font not loaded)");
   return juce::Font(height, style);
 }
 

@@ -270,8 +270,8 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
                                         static_cast<double>(DESIGN_HEIGHT));
 
   // Start a timer to update value labels and visualization
-  // 30 FPS ~ 33ms
-  startTimer(33);
+  // 60 FPS ~ 16ms
+  startTimer(16);
 
   // Configure Signature Link
   signatureLink.setButtonText("by NeiXXa / Version : " + buildHash);
@@ -319,9 +319,12 @@ void Vst_saturatorAudioProcessorEditor::paint(juce::Graphics &g) {
   // === BACKGROUND WAVEFORM VISUALIZATION ===
   // Draw subtle waveform behind everything (but on top of beige)
   // Low contrast orange/brown
+  // Draw filled waveform zone (light orange)
   g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.1f, 0.15f));
+  g.fillPath(waveFillPath);
 
-  // Use a stroke for an oscilloscope look
+  // Optional: Brighter top edge line
+  g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.8f, 0.3f, 0.5f));
   g.strokePath(wavePath,
                juce::PathStrokeType(3.0f, juce::PathStrokeType::curved,
                                     juce::PathStrokeType::rounded));
@@ -358,14 +361,12 @@ void Vst_saturatorAudioProcessorEditor::paint(juce::Graphics &g) {
   // === SECOND WAVEFORM VISUALIZER (over Steve image, more opaque) ===
   // Draw a second instance of the waveform over the Steve image area
   // with higher opacity for better visibility
-  g.setColour(juce::Colour::fromFloatRGBA(
-      1.0f, 0.6f, 0.1f, 0.4f)); // More opaque (0.4 instead of 0.15)
+  // Draw filled waveform zone on Steve (more opaque)
+  g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.1f, 0.35f));
+  g.fillPath(waveFillPath);
 
-  // Create a clipping region for just the Steve image area
-  juce::Graphics::ScopedSaveState saveState(g);
-  g.reduceClipRegion(20, 20, 440, DESIGN_HEIGHT - 40);
-
-  // Draw the waveform in this clipped region
+  // Brighter top edge on Steve
+  g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.8f, 0.3f, 0.7f));
   g.strokePath(wavePath,
                juce::PathStrokeType(3.0f, juce::PathStrokeType::curved,
                                     juce::PathStrokeType::rounded));
@@ -492,19 +493,15 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   offsetY = (windowHeight - scaledHeight) / 2;
 
   // === FIXED PIXEL LAYOUT IN DESIGN SPACE ===
-  // All positions and sizes use design coordinates (1300x850)
+  // All positions and sizes use design coordinates (1300x850),
   // Global scaling is applied via transform in paint()
 
-  // === LAYOUT CONSTANTS (ALL IN DESIGN SPACE PIXELS) ===
   const int imageX = 20;
-  const int imageY = 20;
   const int imageWidth = 440;
-  const int imageHeight = 810; // 850 - 20 - 20
 
-  const int contentStartX = imageX + imageWidth + 30;  // 490
-  const int contentStartY = 100;                       // Header space
-  const int contentWidth = 1300 - contentStartX - 30;  // ~780px
-  const int contentHeight = 850 - contentStartY - 110; // ~640px
+  const int contentStartX = imageX + imageWidth + 30; // 490
+  const int contentStartY = 100;                      // Header space
+  const int contentWidth = 1300 - contentStartX - 30; // ~780px
 
   // 4 columns with GENEROUS spacing
   const int columnCount = 4;
@@ -531,7 +528,6 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   const int row1Y = contentStartY + 80; // More space after buttons
   const int row2Y = row1Y + knobHeight + verticalSpacing;
   const int row3Y = row2Y + knobHeight + verticalSpacing;
-  const int row4Y = row3Y + knobHeight + verticalSpacing;
 
   // === FOOTER ===
   const int footerY = 850 - 100;
@@ -668,8 +664,9 @@ void Vst_saturatorAudioProcessorEditor::timerCallback() {
     localWaveform[(size_t)i] = audioProcessor.visualizerBuffer[(size_t)index];
   }
 
-  // 2. Build Path
+  // 2. Build Paths
   wavePath.clear();
+  waveFillPath.clear();
 
   // Map 512 samples to DESIGN_WIDTH (1300px)
   // Center Y is DESIGN_HEIGHT / 2 (~425)
@@ -678,28 +675,30 @@ void Vst_saturatorAudioProcessorEditor::timerCallback() {
   float startX = 0.0f;
   float endX = (float)DESIGN_WIDTH;
   float centerY = (float)DESIGN_HEIGHT * 0.5f;
-  float amplitudeScale = 200.0f;
+  float amplitudeScale = 220.0f; // Slightly more dramatic
 
   // We skip some samples to smoothen or just draw all points
   int numSamples = (int)localWaveform.size();
   float xStep = (endX - startX) / (float)(numSamples - 1);
 
-  wavePath.startNewSubPath(startX, centerY - localWaveform[0] * amplitudeScale);
+  // Start top line path
+  float startY = centerY - localWaveform[0] * amplitudeScale;
+  wavePath.startNewSubPath(startX, startY);
+  waveFillPath.startNewSubPath(startX, startY);
 
   for (int i = 1; i < numSamples; ++i) {
     float val = localWaveform[(size_t)i];
-    // Soft saturation on the visualization itself to keep it in bounds
-    // val = std::tanh(val);
-
     float x = startX + (float)i * xStep;
     float y = centerY - val * amplitudeScale;
-
-    // Simple lineTo is efficient enough for 512 points
     wavePath.lineTo(x, y);
-
-    // For smoother look, we could use quadraticTo/cubicTo reducing point count,
-    // but 512 lines is fast.
+    waveFillPath.lineTo(x, y);
   }
+
+  // Create the "zone" by closing the fill path until the bottom of the VST
+  // top-right -> bottom-right -> bottom-left -> top-left
+  waveFillPath.lineTo(endX, (float)DESIGN_HEIGHT);
+  waveFillPath.lineTo(startX, (float)DESIGN_HEIGHT);
+  waveFillPath.closeSubPath();
 
   // Timer is used to trigger repaints
   repaint();

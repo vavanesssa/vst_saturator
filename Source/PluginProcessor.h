@@ -116,7 +116,6 @@ private:
   // Delta monitoring crossfade state (for anti-click transitions)
   float deltaSmoothed =
       0.0f; // Current smoothed delta state (0.0 = normal, 1.0 = delta mode)
-  bool lastDeltaState = false; // Previous delta button state
 
   // Delta crossfade parameters (calculated in prepareToPlay)
   float deltaCrossfadeStep =

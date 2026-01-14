@@ -164,14 +164,19 @@ int Vst_saturatorAudioProcessor::getNumPrograms() {
 
 int Vst_saturatorAudioProcessor::getCurrentProgram() { return 0; }
 
-void Vst_saturatorAudioProcessor::setCurrentProgram(int index) {}
+void Vst_saturatorAudioProcessor::setCurrentProgram(int index) {
+  juce::ignoreUnused(index);
+}
 
 const juce::String Vst_saturatorAudioProcessor::getProgramName(int index) {
+  juce::ignoreUnused(index);
   return {};
 }
 
 void Vst_saturatorAudioProcessor::changeProgramName(
-    int index, const juce::String &newName) {}
+    int index, const juce::String &newName) {
+  juce::ignoreUnused(index, newName);
+}
 
 //==============================================================================
 // Initialize DSP here
@@ -237,6 +242,7 @@ bool Vst_saturatorAudioProcessor::isBusesLayoutSupported(
 //==============================================================================
 void Vst_saturatorAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                                juce::MidiBuffer &midiMessages) {
+  juce::ignoreUnused(midiMessages);
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels = getTotalNumInputChannels();
   auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -310,107 +316,6 @@ void Vst_saturatorAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
       static_cast<int>(*apvts.getRawParameterValue("waveshape"));
 
   // 4. Pre/Post Processing Logic
-  auto processSaturation = [&](juce::AudioBuffer<float> &audio) {
-    // This lambda encapsulates the saturation logic
-    float drive = juce::Decibels::decibelsToGain(saturation);
-
-    for (int channel = 0; channel < audio.getNumChannels(); ++channel) {
-      auto *channelData = audio.getWritePointer(channel);
-      for (int sample = 0; sample < audio.getNumSamples(); ++sample) {
-        float x = channelData[sample] * drive;
-        float output = x;
-
-        // Apply selected waveshape
-        switch (waveshapeIndex) {
-        case 0: // Tube
-        {
-          float soft = std::tanh(x * (1.0f - shape * 0.5f));
-          float hard = (x - x * x * x / 3.0f);
-          output = soft * (1.0f - shape) + hard * shape;
-          break;
-        }
-        case 1: // SoftClip
-          output = std::tanh(x * (1.0f + shape * 2.0f));
-          break;
-        case 2: // HardClip
-          output = juce::jlimit(-1.0f, 1.0f, x * (1.0f + shape * 3.0f));
-          break;
-        case 3: // Diode 1
-          output = x > 0.0f ? std::tanh(x * (1.0f + shape)) : x * 0.5f;
-          break;
-        case 4: // Diode 2
-          output = x > 0.0f ? x * 0.7f : std::tanh(x * (1.0f + shape * 2.0f));
-          break;
-        case 5: // Linear Fold
-        {
-          float threshold = 1.0f - shape * 0.5f;
-          if (std::abs(x) > threshold)
-            output = threshold - (std::abs(x) - threshold);
-          else
-            output = x;
-          output = juce::jlimit(-1.0f, 1.0f, output);
-          break;
-        }
-        case 6: // Sin Fold
-          output = std::sin(x * juce::MathConstants<float>::pi *
-                            (1.0f + shape * 2.0f));
-          break;
-        case 7: // Zero-Square
-          output = x * x * (x > 0.0f ? 1.0f : -1.0f) * (1.0f + shape);
-          break;
-        case 8: // Downsample
-        {
-          int factor = static_cast<int>(1.0f + shape * 8.0f);
-          if (sample % factor == 0)
-            output = std::tanh(x);
-          else
-            output = channelData[sample - (sample % factor)];
-          break;
-        }
-        case 9: // Asym
-          output = x > 0.0f ? std::tanh(x * (1.0f + shape * 2.0f)) : x * 0.3f;
-          break;
-        case 10: // Rectify
-          output = std::abs(x) * (1.0f - shape * 0.5f);
-          break;
-        case 11: // X-Shaper
-          output = x * (1.0f + shape) / (1.0f + shape * std::abs(x));
-          break;
-        case 12: // X-Shaper (Asym)
-          output = x > 0.0f ? x * (1.0f + shape * 2.0f) /
-                                  (1.0f + shape * std::abs(x))
-                            : x * 0.5f;
-          break;
-        case 13: // Sine Shaper
-          output = std::sin(std::tanh(x) * juce::MathConstants<float>::pi *
-                            0.5f * (1.0f + shape));
-          break;
-        case 14: // Stomp Box
-          output = std::atan(x * (1.0f + shape * 5.0f)) /
-                   juce::MathConstants<float>::pi;
-          break;
-        case 15: // Tape Sat.
-        {
-          float wet = std::tanh(x * 1.5f);
-          output = x * (1.0f - shape) + wet * shape;
-          break;
-        }
-        case 16: // Overdrive
-          output = (2.0f / juce::MathConstants<float>::pi) *
-                   std::atan(x * (1.0f + shape * 10.0f));
-          break;
-        case 17: // Soft Sat.
-          output = x / (1.0f + std::abs(x) * shape);
-          break;
-        default:
-          output = std::tanh(x);
-          break;
-        }
-
-        channelData[sample] = output;
-      }
-    }
-  };
 
   auto processBands = [&](juce::AudioBuffer<float> &audio) {
     // --- Standard 3-Band Linkwitz-Riley Crossover ---

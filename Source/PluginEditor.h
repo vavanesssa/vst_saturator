@@ -168,6 +168,7 @@ private:
 
   // Waveform visualization
   juce::Path wavePath;
+  juce::Path waveFillPath;
   std::vector<float> localWaveform;
 
   // Tooltip window
