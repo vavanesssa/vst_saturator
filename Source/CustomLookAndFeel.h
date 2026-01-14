@@ -61,6 +61,17 @@ public:
   void drawTooltip(juce::Graphics &g, const juce::String &text, int width,
                    int height) override;
 
+  // Custom styling for PopupMenus (Lists)
+  void drawPopupMenuBackground(juce::Graphics &g, int width,
+                               int height) override;
+  void drawPopupMenuItem(juce::Graphics &g, const juce::Rectangle<int> &area,
+                         bool isSeparator, bool isActive, bool isHighlighted,
+                         bool isChecked, bool hasSubMenu,
+                         const juce::String &text,
+                         const juce::String &shortcutKeyText,
+                         const juce::Drawable *icon,
+                         const juce::Colour *textColourToUse) override;
+
   // Custom styling for TextButtons (Nav arrows)
   void drawButtonBackground(juce::Graphics &g, juce::Button &button,
                             const juce::Colour &backgroundColour,

@@ -18,8 +18,13 @@
 
 CustomLookAndFeel::CustomLookAndFeel() {
   // Force load the custom font immediately
-  DBG("CustomLookAndFeel constructor - loading font...");
   ensureFontLoaded();
+
+  // Set default popup colors
+  setColour(juce::PopupMenu::backgroundColourId,
+            juce::Colour::fromFloatRGBA(1.0f, 0.85f, 0.6f, 1.0f));
+  setColour(juce::PopupMenu::textColourId,
+            juce::Colour::fromFloatRGBA(0.5f, 0.25f, 0.05f, 1.0f));
 }
 
 void CustomLookAndFeel::ensureImageLoaded() {
@@ -381,27 +386,47 @@ void CustomLookAndFeel::drawToggleButton(juce::Graphics &g,
   float padding = 5.0f;
   auto bgBounds = bounds.reduced(padding);
 
-  // Draw background and border based on toggle state
-  if (button.getToggleState()) {
+  bool isOn = button.getToggleState();
+
+  // Draw background and border based on toggle state + hover
+  if (isOn) {
     // Active state: orange/golden glow
-    g.setColour(
-        juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.2f, 0.3f)); // Orange glow
+    float alphaGlow = isMouseOverButton ? 0.4f : 0.25f;
+    g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.2f, alphaGlow));
     g.fillRoundedRectangle(bgBounds.expanded(2.0f), 6.0f);
-    g.setColour(
-        juce::Colour::fromFloatRGBA(1.0f, 0.5f, 0.1f, 0.95f)); // Bright orange
-    g.drawRoundedRectangle(bgBounds, 6.0f, 2.0f);
+
+    float borderThickness = isMouseOverButton ? 2.5f : 2.0f;
+    g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.5f, 0.1f, 1.0f));
+    g.drawRoundedRectangle(bgBounds, 6.0f, borderThickness);
   } else {
     // Inactive state: brown outline
-    g.setColour(juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f, 0.4f));
-    g.drawRoundedRectangle(bgBounds, 6.0f, 1.5f);
+    if (isMouseOverButton) {
+      // Hover effect: Warm glow on the border
+      g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.5f, 0.1f, 0.6f));
+      g.drawRoundedRectangle(bgBounds, 6.0f, 2.0f);
+
+      // Subtle internal fill on hover
+      g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.1f, 0.08f));
+      g.fillRoundedRectangle(bgBounds, 6.0f);
+    } else {
+      g.setColour(juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f, 0.4f));
+      g.drawRoundedRectangle(bgBounds, 6.0f, 1.5f);
+    }
   }
 
   // Draw text
-  g.setColour(
-      button.getToggleState()
-          ? juce::Colour::fromFloatRGBA(1.0f, 0.5f, 0.1f, 1.0f) // Bright orange
-          : juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f, 0.7f)); // Dark brown
-  g.setFont(getCustomFont(24.0f, juce::Font::bold)); // Larger for pen script
+  juce::Colour textCol;
+  if (isOn) {
+    textCol = juce::Colour::fromFloatRGBA(1.0f, 0.5f, 0.1f, 1.0f);
+  } else {
+    textCol = isMouseOverButton
+                  ? juce::Colour::fromFloatRGBA(0.8f, 0.45f, 0.1f,
+                                                0.95f) // Warmer on hover
+                  : juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f, 0.7f);
+  }
+
+  g.setColour(textCol);
+  g.setFont(getCustomFont(24.0f, juce::Font::bold));
   g.drawText(button.getButtonText(), bounds, juce::Justification::centred,
              true);
 }
@@ -481,6 +506,64 @@ void CustomLookAndFeel::drawTooltip(juce::Graphics &g, const juce::String &text,
   g.setColour(juce::Colour::fromFloatRGBA(0.2f, 0.1f, 0.0f, 1.0f));
   g.setFont(getCustomFont(18.0f)); // Tooltip text
   g.drawText(text, bounds.reduced(3), juce::Justification::centred, true);
+}
+
+// === POPUP MENU CUSTOMIZATION ===
+void CustomLookAndFeel::drawPopupMenuBackground(juce::Graphics &g, int width,
+                                                int height) {
+  // Light Orange Background
+  g.fillAll(juce::Colour::fromFloatRGBA(1.0f, 0.85f, 0.65f, 1.0f));
+
+  // Darker Orange Border
+  g.setColour(juce::Colour::fromFloatRGBA(0.8f, 0.45f, 0.1f, 0.8f));
+  g.drawRect(0, 0, width, height, 2);
+}
+
+void CustomLookAndFeel::drawPopupMenuItem(
+    juce::Graphics &g, const juce::Rectangle<int> &area, bool isSeparator,
+    bool isActive, bool isHighlighted, bool isChecked, bool hasSubMenu,
+    const juce::String &text, const juce::String &shortcutKeyText,
+    const juce::Drawable *icon, const juce::Colour *textColourToUse) {
+  juce::ignoreUnused(isChecked, hasSubMenu, shortcutKeyText, icon,
+                     textColourToUse);
+
+  if (isSeparator) {
+    auto r = area.reduced(5, 0);
+    g.setColour(juce::Colour::fromFloatRGBA(0.8f, 0.45f, 0.1f, 0.3f));
+    g.drawLine((float)r.getX(), (float)r.getCentreY(), (float)r.getRight(),
+               (float)r.getCentreY(), 1.0f);
+    return;
+  }
+
+  auto r = area.reduced(1);
+
+  if (isHighlighted && isActive) {
+    // Brighter orange for highlight
+    g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.65f, 0.2f, 1.0f));
+    g.fillRoundedRectangle(r.toFloat(), 4.0f);
+
+    // Text color on highlight (Darker)
+    g.setColour(juce::Colour::fromFloatRGBA(0.3f, 0.15f, 0.05f, 1.0f));
+  } else {
+    // Standard text color (Dark Orange/Brown)
+    g.setColour(juce::Colour::fromFloatRGBA(0.5f, 0.25f, 0.05f, 1.0f));
+  }
+
+  if (!isActive)
+    g.setOpacity(0.3f);
+
+  g.setFont(getCustomFont(22.0f)); // Match UI font size
+
+  auto textRect = r.reduced(10, 0);
+  g.drawText(text, textRect, juce::Justification::centredLeft, true);
+
+  if (isChecked) {
+    auto checkArea = r.removeFromLeft(25).reduced(4);
+    g.setColour(isHighlighted
+                    ? juce::Colour::fromFloatRGBA(0.3f, 0.15f, 0.05f, 1.0f)
+                    : juce::Colour::fromFloatRGBA(0.5f, 0.25f, 0.05f, 1.0f));
+    g.drawFittedText("V", checkArea, juce::Justification::centred, 1);
+  }
 }
 
 // === CUSTOM TEXT BUTTON (Transparent background, Orange Bold Text) ===

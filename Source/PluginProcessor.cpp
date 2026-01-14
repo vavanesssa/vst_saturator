@@ -63,11 +63,34 @@ Vst_saturatorAudioProcessor::createParameterLayout() {
   layout.add(std::make_unique<juce::AudioParameterChoice>(
       "waveshape", // Parameter ID
       "Waveshape", // Parameter Name
-      juce::StringArray{"Tube", "SoftClip", "HardClip", "Diode 1", "Diode 2",
-                        "Linear Fold", "Sin Fold", "Zero-Square", "Downsample",
-                        "Asym", "Rectify", "X-Shaper", "X-Shaper (Asym)",
-                        "Sine Shaper", "Stomp Box", "Tape Sat.", "Overdrive",
-                        "Soft Sat."},
+      juce::StringArray{"Tube",
+                        "SoftClip",
+                        "HardClip",
+                        "Diode 1",
+                        "Diode 2",
+                        "Linear Fold",
+                        "Sin Fold",
+                        "Zero-Square",
+                        "Downsample",
+                        "Asym",
+                        "Rectify",
+                        "X-Shaper",
+                        "X-Shaper (Asym)",
+                        "Sine Shaper",
+                        "Stomp Box",
+                        "Tape Sat.",
+                        "Overdrive",
+                        "Soft Sat.",
+                        "Bit-Crush",
+                        "Glitch Fold",
+                        "Valve",
+                        "Fuzz Fac",
+                        "Cheby 3",
+                        "Cheby 5",
+                        "Log Sat",
+                        "Half Wave",
+                        "Cubic",
+                        "Octaver Sat"},
       0 // Default: Tube
       ));
 
@@ -456,6 +479,58 @@ void Vst_saturatorAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
       break;
     case 17: // Soft Sat.
       output = x / (1.0f + std::abs(x) * shapeParam);
+      break;
+    case 18: // Bit-Crush
+    {
+      float levels = 2.0f + (1.0f - shapeParam) * 30.0f;
+      output = std::round(x * levels) / levels;
+      break;
+    }
+    case 19: // Glitch Fold
+      output = x * std::sin(x * shapeParam * juce::MathConstants<float>::pi);
+      break;
+    case 20: // Valve
+    {
+      float bias = 0.2f * shapeParam;
+      float x_biased = x + bias;
+      output = x_biased / (1.0f + std::abs(x_biased));
+      break;
+    }
+    case 21: // Fuzz Fac
+      output = (x > 0.0f ? 1.0f : -1.0f) *
+               (1.0f - std::exp(-std::abs(x * (1.0f + shapeParam * 10.0f))));
+      break;
+    case 22: // Cheby 3
+    {
+      float x_limited = juce::jlimit(-1.0f, 1.0f, x);
+      output = (4.0f * x_limited * x_limited * x_limited - 3.0f * x_limited) *
+               (0.5f + shapeParam * 0.5f);
+      break;
+    }
+    case 23: // Cheby 5
+    {
+      float x_limited = juce::jlimit(-1.0f, 1.0f, x);
+      output = (16.0f * std::pow(x_limited, 5) -
+                20.0f * std::pow(x_limited, 3) + 5.0f * x_limited) *
+               (0.5f + shapeParam * 0.5f);
+      break;
+    }
+    case 24: // Log Sat
+      output = (x > 0.0f ? 1.0f : -1.0f) *
+               std::log(1.0f + (10.0f + shapeParam * 50.0f) * std::abs(x)) /
+               std::log(11.0f + shapeParam * 50.0f);
+      break;
+    case 25: // Half Wave
+      output = x > 0.0f ? std::tanh(x * (1.0f + shapeParam)) : x;
+      break;
+    case 26: // Cubic
+    {
+      float x_scaled = x * (1.0f + shapeParam);
+      output = x_scaled - (1.0f / 3.0f) * x_scaled * x_scaled * x_scaled;
+      break;
+    }
+    case 27: // Octaver Sat
+      output = (std::abs(x) * 2.0f - 1.0f) * (0.5f + shapeParam * 0.5f);
       break;
     default:
       output = std::tanh(x);

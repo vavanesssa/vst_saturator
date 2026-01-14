@@ -93,12 +93,35 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
                       "Modifie la couleur et l'agressivité de la distorsion"));
 
   // Waveshape ComboBox
-  waveshapeCombo.addItemList(
-      {"Tube", "SoftClip", "HardClip", "Diode 1", "Diode 2", "Linear Fold",
-       "Sin Fold", "Zero-Square", "Downsample", "Asym", "Rectify", "X-Shaper",
-       "X-Shaper (Asym)", "Sine Shaper", "Stomp Box", "Tape Sat.", "Overdrive",
-       "Soft Sat."},
-      1);
+  waveshapeCombo.addItemList({"Tube",
+                              "SoftClip",
+                              "HardClip",
+                              "Diode 1",
+                              "Diode 2",
+                              "Linear Fold",
+                              "Sin Fold",
+                              "Zero-Square",
+                              "Downsample",
+                              "Asym",
+                              "Rectify",
+                              "X-Shaper",
+                              "X-Shaper (Asym)",
+                              "Sine Shaper",
+                              "Stomp Box",
+                              "Tape Sat.",
+                              "Overdrive",
+                              "Soft Sat.",
+                              "Bit-Crush",
+                              "Glitch Fold",
+                              "Valve",
+                              "Fuzz Fac",
+                              "Cheby 3",
+                              "Cheby 5",
+                              "Log Sat",
+                              "Half Wave",
+                              "Cubic",
+                              "Octaver Sat"},
+                             1);
   waveshapeCombo.setLookAndFeel(&customLookAndFeel);
   waveshapeCombo.setTooltip(
       juce::CharPointer_UTF8("Choisissez le type d'algorithme de saturation"));
@@ -357,19 +380,6 @@ void Vst_saturatorAudioProcessorEditor::paint(juce::Graphics &g) {
                       imageBounds.getWidth(), imageBounds.getHeight(),
                       juce::RectanglePlacement::centred, false);
   }
-
-  // === SECOND WAVEFORM VISUALIZER (over Steve image, more opaque) ===
-  // Draw a second instance of the waveform over the Steve image area
-  // with higher opacity for better visibility
-  // Draw filled waveform zone on Steve (more opaque)
-  g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.1f, 0.35f));
-  g.fillPath(waveFillPath);
-
-  // Brighter top edge on Steve
-  g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.8f, 0.3f, 0.7f));
-  g.strokePath(wavePath,
-               juce::PathStrokeType(3.0f, juce::PathStrokeType::curved,
-                                    juce::PathStrokeType::rounded));
 
   // === DRAW ALL LABELS WITH CUSTOM FONT (like min/max values) ===
   // This works because we use g.setFont() directly in paint()
@@ -797,7 +807,38 @@ void Vst_saturatorAudioProcessorEditor::initializePresets() {
                      true, 50.0f, 0.2f, 4.0f, true, 3000.0f, 0.1f, 4.0f, true,
                      true});
 
-  // ============ MASTERING / SUBTLE (27-30) ============
+  // ============ NEW CREATIVE (27-36) ============
+  presets.push_back({"Digital Grit", 18, 12.0f, 0.8f, 0.0f, 80.0f, -2.0f, true,
+                     100.0f, 0.3f, 1.0f, true, 5000.0f, 0.2f, 2.0f, true,
+                     false});
+  presets.push_back({"Glitchy Bass", 19, 9.0f, 0.4f, 2.0f, 85.0f, -1.0f, true,
+                     150.0f, 0.7f, 3.0f, true, 3000.0f, 0.5f, 0.5f, false,
+                     true});
+  presets.push_back({"Valve Master", 20, 4.5f, 0.3f, 0.0f, 40.0f, 0.0f, true,
+                     80.0f, 0.4f, 1.0f, true, 6000.0f, 0.8f, 0.5f, false,
+                     false});
+  presets.push_back({"Hard Fuzz", 21, 15.0f, 0.6f, 3.0f, 95.0f, -4.0f, true,
+                     200.0f, 0.2f, 2.0f, true, 4000.0f, 0.1f, 3.0f, true,
+                     true});
+  presets.push_back({"Harmonic Filter", 22, 7.0f, 0.5f, 0.0f, 60.0f, 0.0f, true,
+                     120.0f, 0.1f, 1.5f, true, 5500.0f, 0.4f, 2.0f, false,
+                     false});
+  presets.push_back({"Polished Sat.", 26, 6.0f, 0.2f, 0.0f, 50.0f, 0.0f, true,
+                     90.0f, 0.5f, 1.0f, true, 7500.0f, 0.7f, 0.5f, false,
+                     false});
+  presets.push_back({"Log Deep", 24, 10.0f, 0.4f, 1.0f, 70.0f, -2.0f, true,
+                     60.0f, 0.8f, 3.5f, false, 8000.0f, 0.5f, 0.0f, true,
+                     false});
+  presets.push_back({"Half Vintage", 25, 8.0f, 0.3f, 0.0f, 45.0f, 0.0f, true,
+                     110.0f, 0.4f, 1.5f, true, 4500.0f, 0.6f, 1.2f, false,
+                     true});
+  presets.push_back({"Octave Dirt", 27, 14.0f, 0.6f, 2.0f, 80.0f, -3.0f, true,
+                     70.0f, 0.3f, 2.0f, true, 5000.0f, 0.2f, 2.5f, true, true});
+  presets.push_back({"Pentode Drive", 20, 11.0f, 0.7f, 1.0f, 90.0f, -3.0f, true,
+                     150.0f, 0.4f, 2.5f, true, 4000.0f, 0.3f, 2.0f, true,
+                     false});
+
+  // ============ MASTERING / SUBTLE (37-40) ============
   presets.push_back({"Master Glue", 18, 2.0f, 0.15f, 0.0f, 25.0f, 0.0f, true,
                      80.0f, 0.4f, 0.5f, true, 10000.0f, 0.7f, 0.5f, true,
                      false});
