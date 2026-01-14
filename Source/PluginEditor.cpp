@@ -92,8 +92,9 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
                              const juce::String &tooltip) {
     slider.setLookAndFeel(&customLookAndFeel);
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0,
-                           0); // Hide text box
+    // Enable text box for double-click editing (custom layout places it in
+    // center)
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 20);
     slider.setTooltip(tooltip);
     addAndMakeVisible(slider);
   };

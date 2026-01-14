@@ -26,6 +26,12 @@ public:
                         float sliderPosProportional, float rotaryStartAngle,
                         float rotaryEndAngle, juce::Slider &slider) override;
 
+  // Custom Slider Layout to center the text box
+  juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override;
+
+  // Custom Slider Text Box creation
+  juce::Label* createSliderTextBox(juce::Slider& slider) override;
+
   // Custom hit test for larger hover area
   bool hitTestRotarySlider(juce::Slider &slider, int x, int y);
 

@@ -24,105 +24,183 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics &g, int x, int y,
                                          float rotaryEndAngle,
                                          juce::Slider &slider) {
   // Check for hover and click states
-  bool isHovered = slider.isMouseOver();
+  bool isHovered = slider.isMouseOverOrDragging();
   bool isPressed = slider.isMouseButtonDown();
 
-  // Calculate the angle based on slider position
+  // Basic dimensions
+  float radius = juce::jmin(width, height) / 2.0f;
+  float centerX = x + width * 0.5f;
+  float centerY = y + height * 0.5f;
+
+  // Design Parameters
+  const float trackWidth = 8.0f;
+  const float mainRadius = radius * 0.9f;
+  const float indicatorRadius = mainRadius - trackWidth * 1.5f;
+
+  // Current Angle
   float angle = rotaryStartAngle +
-                (sliderPosProportional * (rotaryEndAngle - rotaryStartAngle));
+                sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
 
-  // Center and radius with zoom effect when pressed
-  float zoomFactor = isPressed ? 1.05f : 1.0f; // 5% zoom when clicked
-  float centerX = (float)x + (float)width / 2.0f;
-  float centerY = (float)y + (float)height / 2.0f;
-  float baseRadius = juce::jmin(width, height) / 2.0f - 2.0f;
-  float radius = baseRadius * zoomFactor;
+  // === 1. DROP SHADOW (Soft depth) ===
+  juce::Path knobBackground;
+  knobBackground.addEllipse(centerX - mainRadius, centerY - mainRadius,
+                            mainRadius * 2.0f, mainRadius * 2.0f);
 
-  // === HOVER GLOW BACKGROUND ===
-  if (isHovered || isPressed) {
-    // Light orange glow behind the knob (more intense when pressed)
-    float glowAlpha = isPressed ? 0.35f : 0.2f;
-    juce::ColourGradient hoverGlow(
-        juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.2f, glowAlpha), centerX,
-        centerY, juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.2f, 0.0f),
-        centerX - radius * 1.4f, centerY, true);
-    g.setGradientFill(hoverGlow);
-    g.fillEllipse(centerX - radius * 1.3f, centerY - radius * 1.3f,
-                  radius * 2.6f, radius * 2.6f);
+  juce::DropShadow shadow(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.15f),
+                          6, juce::Point<int>(0, 3));
+  shadow.drawForPath(g, knobBackground);
+
+  // === 2. KNOB BODY (Glassy/Modern Gradient) ===
+  juce::ColourGradient knobGradient(
+      juce::Colour::fromFloatRGBA(0.98f, 0.96f, 0.92f, 1.0f), centerX,
+      centerY - mainRadius,
+      juce::Colour::fromFloatRGBA(0.92f, 0.88f, 0.82f, 1.0f), centerX,
+      centerY + mainRadius, false);
+
+  g.setGradientFill(knobGradient);
+  g.fillEllipse(centerX - mainRadius, centerY - mainRadius, mainRadius * 2.0f,
+                mainRadius * 2.0f);
+
+  // Inner subtle highlight edge
+  g.setColour(juce::Colour::fromFloatRGBA(1.0f, 1.0f, 1.0f, 0.6f));
+  g.drawEllipse(centerX - mainRadius + 1.0f, centerY - mainRadius + 1.0f,
+                (mainRadius - 1.0f) * 2.0f, (mainRadius - 1.0f) * 2.0f, 1.0f);
+
+  // === 3. TRACK BACKGROUND (Subtle Groove) ===
+  juce::Path trackPath;
+  trackPath.addCentredArc(centerX, centerY, mainRadius - trackWidth * 0.5f,
+                          mainRadius - trackWidth * 0.5f, 0.0f,
+                          rotaryStartAngle, rotaryEndAngle, true);
+
+  g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f,
+                                          0.05f)); // Very faint indent
+  g.strokePath(trackPath,
+               juce::PathStrokeType(trackWidth, juce::PathStrokeType::curved,
+                                    juce::PathStrokeType::rounded));
+
+  // === 4. ACTIVE VALUE ARC (Orange Gradient) ===
+  juce::Path valuePath;
+  valuePath.addCentredArc(centerX, centerY, mainRadius - trackWidth * 0.5f,
+                          mainRadius - trackWidth * 0.5f, 0.0f,
+                          rotaryStartAngle, angle, true);
+
+  // Dynamic gradient (Orange to Golden)
+  juce::ColourGradient arcGradient(
+      juce::Colour::fromFloatRGBA(1.0f, 0.6f, 0.1f, 1.0f), centerX - mainRadius,
+      centerY + mainRadius,
+      juce::Colour::fromFloatRGBA(1.0f, 0.45f, 0.0f, 1.0f),
+      centerX + mainRadius, centerY - mainRadius, false);
+
+  g.setGradientFill(arcGradient);
+  g.strokePath(valuePath,
+               juce::PathStrokeType(trackWidth, juce::PathStrokeType::curved,
+                                    juce::PathStrokeType::rounded));
+
+  // === 5. INDICATOR DOT (3D Effect) ===
+  float dotX =
+      centerX + (mainRadius - trackWidth * 0.5f) *
+                    std::cos(angle - juce::MathConstants<float>::pi / 2.0f);
+  float dotY =
+      centerY + (mainRadius - trackWidth * 0.5f) *
+                    std::sin(angle - juce::MathConstants<float>::pi / 2.0f);
+  float dotSize = trackWidth * 1.8f; // Slightly larger than track
+
+  // Dot Shadow
+  g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.2f));
+  g.fillEllipse(dotX - dotSize * 0.5f, dotY - dotSize * 0.5f + 1.0f, dotSize,
+                dotSize);
+
+  // Dot Fill (Gold/Orange)
+  juce::ColourGradient dotGradient(
+      juce::Colour::fromFloatRGBA(1.0f, 0.8f, 0.2f, 1.0f),
+      dotX - dotSize * 0.5f, dotY - dotSize * 0.5f,
+      juce::Colour::fromFloatRGBA(0.9f, 0.5f, 0.0f, 1.0f),
+      dotX + dotSize * 0.5f, dotY + dotSize * 0.5f, false);
+  g.setGradientFill(dotGradient);
+  g.fillEllipse(dotX - dotSize * 0.5f, dotY - dotSize * 0.5f, dotSize, dotSize);
+
+  // === 6. MIN / MAX TEXT (Small, light orange) ===
+  g.setColour(juce::Colour::fromFloatRGBA(0.8f, 0.5f, 0.2f, 0.7f));
+  g.setFont(juce::Font(10.0f)); // Minuscule
+
+  juce::String minText =
+      juce::String(slider.getMinimum(), 0); // No decimals usually
+  juce::String maxText = juce::String(slider.getMaxValue(), 0);
+
+  // If values are small float (like 0.0 to 1.0), show decimals
+  if (slider.getMaximum() <= 10.0f) {
+    minText = juce::String(slider.getMinimum(), 1);
+    maxText = juce::String(slider.getMaximum(), 1);
+  } else {
+    minText = juce::String(slider.getMinimum(), 0);
+    maxText = juce::String(slider.getMaximum(), 0);
   }
 
-  // === OUTER RING ===
-  g.setColour(juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f,
-                                          1.0f)); // Dark orange-brown
-  g.drawEllipse(centerX - radius, centerY - radius, radius * 2.0f,
-                radius * 2.0f, 2.0f);
+  // Position: Below the center value
+  // We estimate the center value area is roughly 20px high in the middle.
+  // So we put this at y + 15
+  int labelY = centerY + 12;
 
-  // === BACKGROUND ARC (full circle, faint) ===
-  juce::Path backgroundArc;
-  backgroundArc.addCentredArc(centerX, centerY, radius * 0.85f, radius * 0.85f,
-                              0.0f, rotaryStartAngle, rotaryEndAngle, true);
-  g.setColour(
-      juce::Colour::fromFloatRGBA(0.85f, 0.75f, 0.55f, 0.5f)); // Light beige
-  g.strokePath(backgroundArc, juce::PathStrokeType(3.5f));
+  // Draw Min (Leftish) and Max (Rightish) or just single range string?
+  // "on montre la valeur min et max" -> implies showing the range limits.
+  // Design choice: Show "0" on left and "10" on right?
+  // Or just min/max centered below? "0 - 10" ?
+  // The request says "en minuscule sous le chiffre...".
+  // Let's draw them at the ends of the arc openings or just below center?
+  // User image shows simply the center value.
+  // "sous le chiffre" -> Below the number.
+  // Let's draw "Min  Max" spaced out, or just valid range.
+  // Let's try: "0.00 ... 1.00" spaced slightly.
 
-  // === VALUE ARC (solid dark orange, brighter when hovered) ===
-  juce::Path valueArc;
-  valueArc.addCentredArc(centerX, centerY, radius * 0.85f, radius * 0.85f, 0.0f,
-                         rotaryStartAngle, angle, true);
+  // Actually, standard is to put min at start angle and max at end angle?
+  // "sous le chiffre" suggests centrally aligned below the value.
 
-  // Arc color: brighter when hovered/pressed
-  juce::Colour arcColour =
-      isHovered ? juce::Colour::fromFloatRGBA(
-                      1.0f, 0.5f, 0.0f, 1.0f) // Bright orange when hovered
-                : juce::Colour::fromFloatRGBA(0.8f, 0.4f, 0.0f,
-                                              1.0f); // Normal dark orange
-  g.setColour(arcColour);
-  g.strokePath(valueArc, juce::PathStrokeType(4.5f));
+  juce::String rangeText = minText + " / " + maxText;
+  g.drawText(rangeText, centerX - 40, labelY, 80, 15,
+             juce::Justification::centred, false);
+}
 
-  // === CENTER CIRCLE ===
-  // Slightly tinted when hovered
-  juce::Colour centerColour =
-      isHovered ? juce::Colour::fromFloatRGBA(1.0f, 0.95f, 0.88f,
-                                              1.0f) // Warmer beige on hover
-                : juce::Colour::fromFloatRGBA(0.93f, 0.90f, 0.82f,
-                                              1.0f); // Normal beige
-  g.setColour(centerColour);
-  g.fillEllipse(centerX - radius * 0.5f, centerY - radius * 0.5f, radius,
-                radius);
+// === CUSTOM LAYOUT (Centers the TextBox) ===
+juce::Slider::SliderLayout
+CustomLookAndFeel::getSliderLayout(juce::Slider &slider) {
+  juce::Slider::SliderLayout layout;
+  int size = juce::jmin(slider.getWidth(), slider.getHeight());
 
-  // === INDICATOR DOT ===
-  float dotDistance = radius * 0.65f;
-  float dotX =
-      centerX +
-      dotDistance * std::cos(angle - juce::MathConstants<float>::pi / 2.0f);
-  float dotY =
-      centerY +
-      dotDistance * std::sin(angle - juce::MathConstants<float>::pi / 2.0f);
+  // We want the text box to be in the center, large enough for the number.
+  // 60x20 is usually enough for values.
+  layout.textBoxBounds = juce::Rectangle<int>(0, 0, 70, 20)
+                             .withCentre(slider.getLocalBounds().getCentre());
+  layout.sliderBounds = slider.getLocalBounds();
+  return layout;
+}
 
-  g.setColour(arcColour);
-  float dotSize = isPressed ? 9.0f : 8.0f; // Slightly larger dot when pressed
-  g.fillEllipse(dotX - dotSize / 2.0f, dotY - dotSize / 2.0f, dotSize, dotSize);
+// === CUSTOM TEXT BOX (Transparent, formatted) ===
+juce::Label *CustomLookAndFeel::createSliderTextBox(juce::Slider &slider) {
+  auto *l = new juce::Label();
 
-  // === OUTER HIGHLIGHT (subtle) ===
-  g.setColour(juce::Colour::fromFloatRGBA(1.0f, 0.95f, 0.85f, 0.4f));
-  g.drawEllipse(centerX - radius * 0.98f, centerY - radius * 0.98f,
-                radius * 1.96f, radius * 1.96f, 0.5f);
+  // Transparent background
+  l->setColour(juce::Label::backgroundColourId,
+               juce::Colours::transparentBlack);
+  l->setColour(juce::Label::outlineColourId, juce::Colours::transparentBlack);
+  l->setColour(juce::Label::outlineWhenEditingColourId,
+               juce::Colours::transparentBlack);
 
-  // === VALUE TEXT IN CENTER ===
-  // Get the value from the slider
-  float sliderValue = slider.getValue();
-  juce::String valueText = juce::String(sliderValue, 2); // 2 decimal places
+  // Text Color (Dark Orange/Brown like before)
+  l->setColour(juce::Label::textColourId,
+               juce::Colour::fromFloatRGBA(0.5f, 0.25f, 0.05f, 1.0f));
+  l->setColour(juce::Label::textWhenEditingColourId,
+               juce::Colour::fromFloatRGBA(0.2f, 0.1f, 0.0f, 1.0f));
 
-  // Draw the text centered in the knob
-  g.setColour(juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f,
-                                          1.0f)); // Dark orange-brown
-  g.setFont(juce::Font(14.0f * zoomFactor, juce::Font::bold));
+  // Font
+  l->setFont(juce::Font(16.0f, juce::Font::bold));
+  l->setJustificationType(juce::Justification::centred);
 
-  juce::Rectangle<float> textBox(centerX - radius * 0.4f,
-                                 centerY - 8.0f * zoomFactor, radius * 0.8f,
-                                 16.0f * zoomFactor);
-  g.drawText(valueText, textBox.toNearestInt(), juce::Justification::centred,
-             false);
+  // Crucial: Edit on DOUBLE CLICK
+  // This makes the label require a double click to enter edit mode.
+  // Single click won't trigger edit (so dragging works better).
+  l->setEditable(false, true, false);
+
+  return l;
 }
 
 bool CustomLookAndFeel::hitTestRotarySlider(juce::Slider &slider, int x,
