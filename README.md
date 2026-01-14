@@ -412,7 +412,7 @@ private:
 | `paint()` | 325-478 | Draw background, Steve, waveform, labels |
 | `resized()` | 480-641 | Position all components using scaled coordinates |
 | `timerCallback()` | 643-715 | Update waveform, Steve animation (30fps) |
-| `initializePresets()` | 721-854 | Define 15+ factory presets |
+| `initializePresets()` | 821-1020 | Define 76 factory presets |
 | `applyPreset()` | 856-907 | Apply preset values to sliders |
 | `loadImage()` | 944-974 | Load images from BinaryData or filesystem |
 
@@ -477,7 +477,7 @@ private:
 ├──────────────┼────────────────┼─────────────┼─────────────┼──────────┤
 │ drive        │ Saturation     │ 0.0         │ 24.0 dB     │ 0.0      │
 │ shape        │ Shape          │ 0.0         │ 1.0         │ 0.0      │
-│ waveshape    │ Waveshape      │ 0           │ 27 (choice) │ 0 (Tube) │
+│ waveshape    │ Waveshape      │ 0           │ 57 (choice) │ 0 (Tube) │
 └──────────────┴────────────────┴─────────────┴─────────────┴──────────┘
 
 // B. LOW BAND (4 params)
@@ -656,13 +656,14 @@ saturationAttachment = std::make_unique<SliderAttachment>(
 
 ---
 
-## 🌊 Waveshape Algorithms (28 Types)
+## 🌊 Waveshape Algorithms (58 Types)
 
 ### Complete Algorithm Reference
 
+#### 🎸 CLASSIC (0-9)
 | Index | Name | Formula | Character |
 |-------|------|---------|-----------|
-| 0 | **Tube** | `soft*(1-s) + hard*s` where `soft=tanh(x*(1-s*0.5))`, `hard=x-x³/3` | Warm, vintage |
+| 0 | **Tube** | `soft*(1-s) + hard*s` | Warm, vintage |
 | 1 | **SoftClip** | `tanh(x * (1 + s*2))` | Smooth, musical |
 | 2 | **HardClip** | `clamp(x * (1 + s*3), -1, 1)` | Digital, aggressive |
 | 3 | **Diode 1** | `x>0 ? tanh(x*(1+s)) : x*0.5` | Asymmetric, rectified |
@@ -670,8 +671,12 @@ saturationAttachment = std::make_unique<SliderAttachment>(
 | 5 | **Linear Fold** | Threshold-based folding | Creative, metallic |
 | 6 | **Sin Fold** | `sin(x * π * (1+s*2))` | Wavetable-like |
 | 7 | **Zero-Square** | `x² * sign(x) * (1+s)` | Harsh, edgy |
-| 8 | **Downsample** | `tanh(x*(1+s))` (simplified) | Lo-fi feel |
+| 8 | **Downsample** | `tanh(x*(1+s))` | Lo-fi feel |
 | 9 | **Asym** | `x>0 ? tanh(x*(1+s*2)) : x*0.3` | Tube-like asymmetry |
+
+#### 🔧 SHAPERS (10-19)
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
 | 10 | **Rectify** | `abs(x) * (1-s*0.5)` | Octave-up effect |
 | 11 | **X-Shaper** | `x*(1+s) / (1+s*abs(x))` | Soft limiting |
 | 12 | **X-Shaper Asym** | Asymmetric X-Shaper | Warm edges |
@@ -682,6 +687,10 @@ saturationAttachment = std::make_unique<SliderAttachment>(
 | 17 | **Soft Sat.** | `x / (1 + abs(x)*s)` | Gentle saturation |
 | 18 | **Bit-Crush** | `round(x*levels) / levels` | Digital artifacts |
 | 19 | **Glitch Fold** | `x * sin(x*s*π)` | Experimental |
+
+#### 📻 ANALOG (20-27)
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
 | 20 | **Valve** | `(x+bias) / (1+abs(x+bias))` | Vintage tube |
 | 21 | **Fuzz Fac** | `sign(x) * (1-exp(-abs(x*(1+s*10))))` | Fuzz Face style |
 | 22 | **Cheby 3** | `(4x³ - 3x) * (0.5+s*0.5)` | 3rd harmonic |
@@ -691,10 +700,190 @@ saturationAttachment = std::make_unique<SliderAttachment>(
 | 26 | **Cubic** | `x_scaled - x_scaled³/3` | Classic soft clip |
 | 27 | **Octaver Sat** | `(abs(x)*2 - 1) * (0.5+s*0.5)` | Octave generator |
 
+#### 🔥 TUBE TYPES (28-33) — *Inspired by Decapitator*
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
+| 28 | **Triode** | 12AX7 model with mu factor | Classic warmth |
+| 29 | **Pentode** | EL34 with screen grid | Power tube push |
+| 30 | **Class A** | Single-ended bias | Smooth warmth |
+| 31 | **Class AB** | Push-pull threshold | Punchy attack |
+| 32 | **Class B** | Crossover distortion | Gritty character |
+| 33 | **Germanium** | Temperature-dependent | Vintage fuzz |
+
+#### 📼 TAPE MODES (34-38) — *Inspired by Saturn*
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
+| 34 | **Tape 15ips** | Fast speed, high headroom | Bright, open |
+| 35 | **Tape 7.5ips** | Slow speed, warmth boost | Warm, round |
+| 36 | **Tape Cassette** | HF loss + saturation | Lo-fi vibes |
+| 37 | **Tape 456** | Ampex 456 hysteresis | Punchy low end |
+| 38 | **Tape SM900** | Modern tape blend | Clean + vintage |
+
+#### 🎛️ TRANSFORMER (39-42)
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
+| 39 | **Transformer** | Iron core saturation | Harmonic warmth |
+| 40 | **Console** | Neve-style harmonics | Rich coloring |
+| 41 | **API Style** | Punchy clipping | Attack + presence |
+| 42 | **SSL Style** | Clean compression | Subtle sheen |
+
+#### ⚡ TRANSISTOR (43-47)
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
+| 43 | **Silicon** | Modern transistor clip | Crisp, defined |
+| 44 | **FET Clean** | 1176-style limiting | Transparent control |
+| 45 | **FET Dirty** | 1176 all-buttons-in | Aggressive pump |
+| 46 | **OpAmp** | IC-style clipping | Harsh but musical |
+| 47 | **CMOS** | Digital/analog hybrid | Unique texture |
+
+#### 🎨 CREATIVE (48-52) — *Inspired by Trash 2*
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
+| 48 | **Scream** | Extreme harmonic boost | Aggressive screamer |
+| 49 | **Buzz** | Sine modulation | Buzzy texture |
+| 50 | **Crackle** | Random noise injection | Vinyl character |
+| 51 | **Wrap** | Wrap-around modulo | Experimental |
+| 52 | **Density** | Dual-tanh stacking | Thick, dense |
+
+#### 📐 MATH / EXOTIC (53-57)
+| Index | Name | Formula | Character |
+|-------|------|---------|-----------|
+| 53 | **Cheby 7** | 7th order Chebyshev polynomial | Rich harmonics |
+| 54 | **Hyperbolic** | `sinh(x) / cosh(2x)` | Smooth curves |
+| 55 | **Exponential** | `1 - exp(-abs(x))` | Fast attack |
+| 56 | **Parabolic** | Parabolic limiting curve | Soft knee |
+| 57 | **Wavelet** | Mexican hat wavelet | Unique texture |
+
 ### Shape Parameter Behavior
 - `s=0.0`: Mild effect, original character preserved
 - `s=0.5`: Balanced, typical use
 - `s=1.0`: Maximum effect, extreme character
+
+---
+
+## 🎵 Factory Presets (76 Presets)
+
+### Preset Categories
+
+#### 🎸 CLASSICS (1-6)
+| Preset | Waveshape | Character |
+|--------|-----------|-----------|
+| Warm Tape | Tape Sat. | Vintage analog warmth |
+| Tube Glow | SoftClip | Classic tube saturation |
+| Soft Clip | HardClip | Digital but musical |
+| Vintage Console | SoftClip | Old desk coloring |
+| Analog Warmth | Soft Sat. | Subtle harmonics |
+| Classic Overdrive | Overdrive | Rock amp simulation |
+
+#### 🎵 MUSIC STYLES (7-12)
+| Preset | Best For |
+|--------|----------|
+| Hip-Hop Low End | 808s, bass |
+| EDM Punch | Transients |
+| Rock Crunch | Guitars |
+| Jazz Warmth | Horns, piano |
+| Lo-Fi Beats | Chill vibes |
+| Metal Aggression | Heavy guitars |
+
+#### 🎹 INSTRUMENTS (13-20)
+| Preset | Target |
+|--------|--------|
+| Bass Growl | Bass guitar |
+| Vocal Warmth | Lead vocals |
+| Drums Punch | Drum bus |
+| Guitar Amp | Electric guitar |
+| Synth Edge | Synth leads |
+| Piano Glue | Acoustic piano |
+| Strings Silk | Strings |
+| Horns Presence | Brass |
+
+#### ✨ CREATIVE / FX (21-26)
+| Preset | Effect |
+|--------|--------|
+| Bitcrushed | Digital destruction |
+| Fuzz Box | Vintage fuzz pedal |
+| Wave Folder | Metallic textures |
+| Sin Fold | Wavetable-like |
+| Rectifier | Octave-up effect |
+| Extreme Destroy | Complete destruction |
+
+#### 🆕 NEW CREATIVE (27-36)
+| Preset | Character |
+|--------|-----------|
+| Digital Grit | Modern edge |
+| Glitchy Bass | Experimental |
+| Valve Master | Tube preamp |
+| Hard Fuzz | Heavy fuzz |
+| Harmonic Filter | Chebyshev |
+| Polished Sat. | Clean saturation |
+| Log Deep | Logarithmic depth |
+| Half Vintage | Half-wave character |
+| Octave Dirt | Octave + distortion |
+| Pentode Drive | Power tube |
+
+#### 🎚️ MASTERING / SUBTLE (37-40)
+| Preset | Use Case |
+|--------|----------|
+| Master Glue | Mix bus glue |
+| Parallel Crush | Parallel processing |
+| Subtle Harmonics | Mastering gentle |
+| Bus Warmth | Subgroup saturation |
+
+#### 🔥 DECAPITATOR STYLE (41-48)
+| Preset | Emulation |
+|--------|-----------|
+| Punish (A) | Aggressive Triode |
+| Pentode Power | EL34 power section |
+| Class A Warmth | Single-ended amp |
+| Push-Pull Punch | Class AB power |
+| Germanium Fuzz | Vintage transistor |
+| Triode Clean | Subtle 12AX7 |
+| Hot Pentode | Pushed hard |
+| Class B Grit | Crossover distortion |
+
+#### 📼 SATURN TAPE STYLE (49-56)
+| Preset | Mode |
+|--------|------|
+| Tape Machine 15 | 15 ips bright |
+| Tape Machine 7.5 | 7.5 ips warm |
+| Lo-Fi Cassette | Cassette vibes |
+| Ampex 456 | Punchy tape |
+| Modern Tape | SM900 clean |
+| Tape Slam | Driven tape |
+| Tape + Tube | Combined |
+| Vintage Deck | Reel-to-reel |
+
+#### 🎛️ CONSOLE / TRANSFORMER (57-62)
+| Preset | Emulation |
+|--------|-----------|
+| Neve Console | 1073-style warmth |
+| API Punch | API 2500 punch |
+| SSL Sheen | G-Series clean |
+| Iron Saturator | Transformer iron |
+| Console Crunch | Pushed preamp |
+| Vintage Desk | Old console |
+
+#### ⚡ MODERN PRODUCTION (63-68)
+| Preset | Style |
+|--------|-------|
+| FET Vocal | 1176 on vocals |
+| All Buttons In | 1176 slammed |
+| Silicon Bass | Transistor bass |
+| OpAmp Drive | IC character |
+| Digital Hybrid | CMOS blend |
+| Parallel FET | Parallel compression |
+
+#### 🎨 SOUND DESIGN (69-76)
+| Preset | Effect |
+|--------|--------|
+| Screamer | Aggressive scream |
+| Buzz Saw | Buzzy texture |
+| Vinyl Crackle | Lo-fi crackle |
+| Wrap Around | Wrap distortion |
+| Dense Stack | Thick density |
+| Harmonic 7 | Chebyshev 7th |
+| Hyperbolic | Sinh curves |
+| Wavelet FX | Wavelet texture |
 
 ---
 
