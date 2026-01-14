@@ -6,6 +6,9 @@
 ![VST3](https://img.shields.io/badge/Format-VST3-orange?style=for-the-badge)
 ![Steve](https://img.shields.io/badge/Mascot-Steve_The_Fish-blueviolet?style=for-the-badge)
 
+[![Download Artifacts](https://img.shields.io/badge/📥_Download-Latest_Build_(Artifacts)-success?style=for-the-badge&logo=github)](../../actions)
+[![Releases](https://img.shields.io/badge/🚀_Download-Stable_Release-blue?style=for-the-badge&logo=github)](../../releases)
+
 Bienvenue sur la documentation officielle du **Steverator**, un plugin de saturation audio unique en son genre, accompagné de Steve le poisson.
 
 ---
