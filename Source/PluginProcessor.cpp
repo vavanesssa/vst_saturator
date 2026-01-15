@@ -39,6 +39,16 @@ Vst_saturatorAudioProcessor::Vst_saturatorAudioProcessor()
 
 Vst_saturatorAudioProcessor::~Vst_saturatorAudioProcessor() {}
 
+// Returns a deterministic noise sample in [-1, 1].
+// This is RT-safe and avoids using rand() in the audio thread.
+float Vst_saturatorAudioProcessor::nextNoiseSample() {
+  noiseSeed = 1664525u * noiseSeed + 1013904223u;
+  const float normalized =
+      static_cast<float>(noiseSeed & 0x00FFFFFFu) /
+      static_cast<float>(0x00FFFFFFu);
+  return normalized * 2.0f - 1.0f;
+}
+
 //==============================================================================
 // Parameter Layout
 // Defines what parameters exist in the plugin.
@@ -269,6 +279,7 @@ void Vst_saturatorAudioProcessor::prepareToPlay(double sampleRate,
   lowBuffer.setSize(spec.numChannels, spec.maximumBlockSize);
   midBuffer.setSize(spec.numChannels, spec.maximumBlockSize);
   highBuffer.setSize(spec.numChannels, spec.maximumBlockSize);
+  dryBuffer.setSize(spec.numChannels, spec.maximumBlockSize);
 
   // 6. Prepare Oversampling
   oversampling.initProcessing(spec.maximumBlockSize);
@@ -280,8 +291,12 @@ void Vst_saturatorAudioProcessor::prepareToPlay(double sampleRate,
   // 8. Delta monitoring crossfade: ~10ms fade time for anti-click
   // Calculate step per sample: 1.0 / (fadeTimeSeconds * sampleRate)
   const float fadeTimeMs = 10.0f;
-  deltaCrossfadeStep =
-      1.0f / (fadeTimeMs * 0.001f * static_cast<float>(sampleRate));
+  if (sampleRate > 0.0) {
+    deltaCrossfadeStep =
+        1.0f / (fadeTimeMs * 0.001f * static_cast<float>(sampleRate));
+  } else {
+    deltaCrossfadeStep = 0.0f;
+  }
 }
 
 void Vst_saturatorAudioProcessor::releaseResources() {
@@ -357,23 +372,34 @@ void Vst_saturatorAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   // 2. Gain Staging
   // Store a clean copy of the input signal for the Dry/Wet mix.
-  juce::AudioBuffer<float> dryBuffer;
-  dryBuffer.makeCopyOf(buffer);
+  jassert(dryBuffer.getNumChannels() >= totalNumOutputChannels);
+  jassert(dryBuffer.getNumSamples() >= buffer.getNumSamples());
+  if (dryBuffer.getNumChannels() < totalNumOutputChannels ||
+      dryBuffer.getNumSamples() < buffer.getNumSamples()) {
+    // Defensive resize in case the host exceeds the expected block size.
+    dryBuffer.setSize(totalNumOutputChannels, buffer.getNumSamples(), false,
+                      false, true);
+  }
+  for (int channel = 0; channel < totalNumOutputChannels; ++channel) {
+    dryBuffer.copyFrom(channel, 0, buffer, channel, 0, buffer.getNumSamples());
+  }
 
   // Apply Input Gain
   buffer.applyGain(inputGain);
 
   // 3. Update Filter Coefficients (if needed)
-  if (lowFreq != lastLowFreq || getSampleRate() != lastSampleRate) {
+  const double currentSampleRate = getSampleRate();
+  if (lowFreq != lastLowFreq || currentSampleRate != lastSampleRate) {
     lp1.setCutoffFrequency(lowFreq);
     hp1.setCutoffFrequency(lowFreq);
     lastLowFreq = lowFreq;
   }
-  if (highFreq != lastHighFreq || getSampleRate() != lastSampleRate) {
+  if (highFreq != lastHighFreq || currentSampleRate != lastSampleRate) {
     lp2.setCutoffFrequency(highFreq);
     hp2.setCutoffFrequency(highFreq);
     lastHighFreq = highFreq;
   }
+  lastSampleRate = currentSampleRate;
 
   // Get waveshape selection
   int waveshapeIndex =
@@ -761,8 +787,7 @@ void Vst_saturatorAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
     case 50: // Crackle - Subtle noise/crackle character
     {
-      float noise =
-          (static_cast<float>(rand()) / RAND_MAX - 0.5f) * 0.02f * shapeParam;
+      float noise = nextNoiseSample() * 0.02f * shapeParam;
       output = std::tanh(x * (1.0f + shapeParam * 2.0f)) + noise * std::abs(x);
       break;
     }
@@ -978,18 +1003,23 @@ void Vst_saturatorAudioProcessor::getStateInformation(
   // Save the APVTS state to XML, then to binary
   auto state = apvts.copyState();
   std::unique_ptr<juce::XmlElement> xml(state.createXml());
-  copyXmlToBinary(*xml, destData);
+  if (xml != nullptr)
+    copyXmlToBinary(*xml, destData);
 }
 
 void Vst_saturatorAudioProcessor::setStateInformation(const void *data,
                                                       int sizeInBytes) {
   // Load the APVTS state from binary
+  if (data == nullptr || sizeInBytes <= 0)
+    return;
   std::unique_ptr<juce::XmlElement> xmlState(
       getXmlFromBinary(data, sizeInBytes));
 
-  if (xmlState.get() != nullptr)
-    if (xmlState->hasTagName(apvts.state.getType()))
-      apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
+  if (xmlState == nullptr)
+    return;
+  if (!xmlState->hasTagName(apvts.state.getType()))
+    return;
+  apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
 //==============================================================================

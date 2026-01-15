@@ -93,6 +93,10 @@ private:
   // Helper function to define the parameters layout
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
+  // Returns a deterministic noise sample in [-1, 1] for RT-safe use in DSP.
+  // Use this for subtle noise-based effects without calling non-RT-safe rand().
+  float nextNoiseSample();
+
   // --- DSP Member Variables ---
 
   // 3-Band Crossover using Linkwitz-Riley filters
@@ -101,6 +105,10 @@ private:
 
   // Audio buffers for split-band processing
   juce::AudioBuffer<float> lowBuffer, midBuffer, highBuffer;
+  juce::AudioBuffer<float> dryBuffer;
+
+  // Deterministic noise state for RT-safe random modulation
+  uint32_t noiseSeed = 0x1234567u;
 
   // Previous parameter values to avoid unnecessary updates in the audio thread
   float lastLowFreq = 0.0f;
