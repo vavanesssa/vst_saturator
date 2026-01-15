@@ -13,9 +13,49 @@
 #include "BinaryData.h"
 
 //==============================================================================
+TabLookAndFeel::TabLookAndFeel(CustomLookAndFeel &base)
+    : baseLookAndFeel(base) {}
+
+void TabLookAndFeel::drawButtonBackground(
+    juce::Graphics &g, juce::Button &button,
+    const juce::Colour &backgroundColour,
+    bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) {
+  auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
+  float cornerRadius = 8.0f;
+
+  auto fillColour = backgroundColour;
+  if (shouldDrawButtonAsDown)
+    fillColour = fillColour.darker(0.15f);
+  else if (shouldDrawButtonAsHighlighted)
+    fillColour = fillColour.brighter(0.1f);
+
+  g.setColour(fillColour);
+  g.fillRoundedRectangle(bounds, cornerRadius);
+
+  g.setColour(fillColour.darker(0.3f));
+  g.drawRoundedRectangle(bounds, cornerRadius, 1.5f);
+}
+
+void TabLookAndFeel::drawButtonText(juce::Graphics &g,
+                                    juce::TextButton &button,
+                                    bool shouldDrawButtonAsHighlighted,
+                                    bool shouldDrawButtonAsDown) {
+  juce::ignoreUnused(shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
+
+  auto textColour = button.findColour(button.getToggleState()
+                                          ? juce::TextButton::textColourOnId
+                                          : juce::TextButton::textColourOffId);
+  g.setColour(textColour);
+  g.setFont(baseLookAndFeel.getCustomFont(22.0f, juce::Font::bold));
+  g.drawText(button.getButtonText(), button.getLocalBounds(),
+             juce::Justification::centred, true);
+}
+
+//==============================================================================
 Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
     Vst_saturatorAudioProcessor &p)
     : AudioProcessorEditor(&p), audioProcessor(p),
+      tabLookAndFeel(customLookAndFeel),
       tooltipWindow(this, 1500, customLookAndFeel) {
 
   // Load build hash from version.txt
@@ -81,6 +121,33 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
     button.setTooltip(tooltip);
     addAndMakeVisible(button);
   };
+
+  auto configureTabButton = [&](juce::TextButton &button,
+                                const juce::String &text,
+                                const juce::Colour &backgroundColour) {
+    button.setButtonText(text);
+    button.setLookAndFeel(&tabLookAndFeel);
+    button.setClickingTogglesState(true);
+    button.setRadioGroupId(3001);
+    button.setColour(juce::TextButton::buttonColourId, backgroundColour);
+    button.setColour(juce::TextButton::textColourOffId,
+                     juce::Colour::fromFloatRGBA(0.4f, 0.2f, 0.1f, 1.0f));
+    button.setColour(juce::TextButton::textColourOnId,
+                     juce::Colour::fromFloatRGBA(0.4f, 0.2f, 0.1f, 1.0f));
+    addAndMakeVisible(button);
+  };
+
+  configureTabButton(
+      knobsTabButton, "KNOBS",
+      juce::Colour::fromFloatRGBA(0.98f, 0.94f, 0.86f, 1.0f));
+  configureTabButton(
+      visualizerTabButton, "VISUALIZER",
+      juce::Colour::fromFloatRGBA(1.0f, 0.82f, 0.88f, 1.0f));
+  configureTabButton(
+      thirdTabButton, "THIRD",
+      juce::Colour::fromFloatRGBA(0.88f, 0.82f, 1.0f, 1.0f));
+
+  knobsTabButton.setToggleState(true, juce::dontSendNotification);
 
   // A. Saturation Globale
   // A. Saturation Globale
@@ -757,6 +824,24 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   const int comboWidth = 180;
   const int comboHeight = 35;
   const int navSpacing = 5;
+
+  // Tabs (top-left)
+  const int tabStartX = 20;
+  const int tabStartY = 20;
+  const int tabHeight = 40;
+  const int tabSpacing = 8;
+  const int knobsTabWidth = 120;
+  const int visualizerTabWidth = 170;
+  const int thirdTabWidth = 110;
+
+  knobsTabButton.setBounds(
+      scaleDesignBounds(tabStartX, tabStartY, knobsTabWidth, tabHeight));
+  visualizerTabButton.setBounds(scaleDesignBounds(
+      tabStartX + knobsTabWidth + tabSpacing, tabStartY, visualizerTabWidth,
+      tabHeight));
+  thirdTabButton.setBounds(scaleDesignBounds(
+      tabStartX + knobsTabWidth + tabSpacing + visualizerTabWidth + tabSpacing,
+      tabStartY, thirdTabWidth, tabHeight));
 
   // PRESETS section (left side of top bar, after Steve image area)
   const int presetStartX = 480;

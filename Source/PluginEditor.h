@@ -40,6 +40,23 @@ private:
   CustomLookAndFeel &lookAndFeel;
 };
 
+class TabLookAndFeel final : public juce::LookAndFeel_V4 {
+public:
+  explicit TabLookAndFeel(CustomLookAndFeel &baseLookAndFeel);
+
+  void drawButtonBackground(juce::Graphics &g, juce::Button &button,
+                            const juce::Colour &backgroundColour,
+                            bool shouldDrawButtonAsHighlighted,
+                            bool shouldDrawButtonAsDown) override;
+
+  void drawButtonText(juce::Graphics &g, juce::TextButton &button,
+                      bool shouldDrawButtonAsHighlighted,
+                      bool shouldDrawButtonAsDown) override;
+
+private:
+  CustomLookAndFeel &baseLookAndFeel;
+};
+
 class Vst_saturatorAudioProcessorEditor : public juce::AudioProcessorEditor,
                                           private juce::Timer {
 public:
@@ -170,6 +187,12 @@ private:
 
   // Custom UI styling
   CustomLookAndFeel customLookAndFeel;
+  TabLookAndFeel tabLookAndFeel;
+
+  // Tabs (top-left navigation)
+  juce::TextButton knobsTabButton{"KNOBS"};
+  juce::TextButton visualizerTabButton{"VISUALIZER"};
+  juce::TextButton thirdTabButton{"THIRD"};
 
   // Steve image for left side display
   juce::Image steveImage;
