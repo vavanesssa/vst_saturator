@@ -20,6 +20,7 @@
 
 #include <JuceHeader.h>
 #include <juce_dsp/juce_dsp.h>
+#include "Waveshaper.h"
 
 //==============================================================================
 class Vst_saturatorAudioProcessor : public juce::AudioProcessor {
@@ -92,6 +93,9 @@ public:
 private:
   // Helper function to define the parameters layout
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+  void processBands(juce::AudioBuffer<float>& audio, float lowWarmth, float lowLevel, bool lowEnable, float highSoftness, float highLevel, bool highEnable);
+  void applySaturation(juce::AudioBuffer<float>& audio, float saturation, int waveshapeIndex, float shape);
+  void applyFinalMix(juce::AudioBuffer<float>& audio, const juce::AudioBuffer<float>& dryBuffer, float mix, bool deltaEnabled, float deltaGain, float outputGain, bool limiterEnable);
 
   // --- DSP Member Variables ---
 
