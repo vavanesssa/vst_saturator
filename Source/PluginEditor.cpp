@@ -10,6 +10,7 @@
 
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
+#include "BinaryData.h"
 
 //==============================================================================
 Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
@@ -1193,6 +1194,24 @@ void Vst_saturatorAudioProcessorEditor::navigateWaveshape(int direction) {
 //==============================================================================
 juce::Image
 Vst_saturatorAudioProcessorEditor::loadImage(const juce::String &imageName) {
+  auto loadFromBinary = [&imageName]() -> juce::Image {
+    if (imageName == "steve.png") {
+      return juce::ImageFileFormat::loadFrom(BinaryData::steve_png,
+                                             BinaryData::steve_pngSize);
+    }
+
+    if (imageName == "steve2.png") {
+      return juce::ImageFileFormat::loadFrom(BinaryData::steve2_png,
+                                             BinaryData::steve2_pngSize);
+    }
+
+    return juce::Image();
+  };
+
+  if (auto embeddedImage = loadFromBinary(); !embeddedImage.isNull()) {
+    return embeddedImage;
+  }
+
   juce::File imageFile;
   auto appDir =
       juce::File::getSpecialLocation(juce::File::currentApplicationFile);
