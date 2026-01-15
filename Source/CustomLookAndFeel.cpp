@@ -15,6 +15,7 @@
 
 #include "CustomLookAndFeel.h"
 #include "BinaryData.h"
+#include <cmath>
 
 CustomLookAndFeel::CustomLookAndFeel() {
   // Force load the custom font immediately
@@ -477,17 +478,29 @@ juce::Rectangle<int>
 CustomLookAndFeel::getTooltipBounds(const juce::String &tipText,
                                     juce::Point<int> screenPos,
                                     juce::Rectangle<int> parentArea) {
-  const int padding = 6;
   juce::TextLayout layout;
   juce::AttributedString str(tipText);
-  str.setFont(getCustomFont(18.0f)); // Use NanumPenScript font
-  layout.createLayout(str, 300.0f);
+  str.setFont(getTooltipFont());
+  layout.createLayout(str, static_cast<float>(tooltipMaxWidth - tooltipPadding * 2));
 
-  int w = (int)layout.getWidth() + padding * 2;
-  int h = (int)layout.getHeight() + padding * 2;
+  if (tipText != lastTooltipText) {
+    tooltipScrollOffset = 0.0f;
+    lastTooltipText = tipText;
+  }
 
-  return juce::Rectangle<int>(screenPos.x - w / 2, screenPos.y + 16, w, h)
-      .constrainedWithin(parentArea);
+  int contentWidth =
+      static_cast<int>(std::ceil(layout.getWidth())) + tooltipPadding * 2;
+  lastTooltipContentHeight =
+      static_cast<int>(std::ceil(layout.getHeight())) + tooltipPadding * 2;
+
+  int w = juce::jmin(tooltipMaxWidth, contentWidth);
+  int h = juce::jmin(tooltipMaxHeight, lastTooltipContentHeight);
+
+  auto bounds =
+      juce::Rectangle<int>(screenPos.x - w / 2, screenPos.y + 16, w, h)
+          .constrainedWithin(parentArea);
+  lastTooltipVisibleHeight = bounds.getHeight();
+  return bounds;
 }
 
 void CustomLookAndFeel::drawTooltip(juce::Graphics &g, const juce::String &text,
@@ -504,8 +517,44 @@ void CustomLookAndFeel::drawTooltip(juce::Graphics &g, const juce::String &text,
 
   // Text: Dark brown/black for contrast
   g.setColour(juce::Colour::fromFloatRGBA(0.2f, 0.1f, 0.0f, 1.0f));
-  g.setFont(getCustomFont(18.0f)); // Tooltip text
-  g.drawText(text, bounds.reduced(3), juce::Justification::centred, true);
+  g.setFont(getTooltipFont()); // Tooltip text
+
+  juce::TextLayout layout;
+  juce::AttributedString str(text);
+  str.setFont(getTooltipFont());
+  layout.createLayout(str, static_cast<float>(width - tooltipPadding * 2));
+
+  int contentHeight =
+      static_cast<int>(std::ceil(layout.getHeight())) + tooltipPadding * 2;
+  int maxScroll = juce::jmax(0, contentHeight - height);
+  tooltipScrollOffset =
+      juce::jlimit(0.0f, static_cast<float>(maxScroll), tooltipScrollOffset);
+
+  auto textArea = bounds.reduced(tooltipPadding);
+  juce::Graphics::ScopedSaveState state(g);
+  g.reduceClipRegion(textArea);
+  layout.draw(g,
+              textArea.toFloat().translated(0.0f, -tooltipScrollOffset));
+}
+
+juce::Font CustomLookAndFeel::getTooltipFont() const {
+  return juce::Font(juce::Font::getDefaultMonospacedFontName(), 11.0f,
+                    juce::Font::plain);
+}
+
+bool CustomLookAndFeel::scrollTooltip(float deltaY) {
+  int maxScroll = juce::jmax(0, lastTooltipContentHeight - lastTooltipVisibleHeight);
+  if (maxScroll == 0)
+    return false;
+
+  float scrollDelta = -deltaY * 40.0f;
+  float newOffset =
+      juce::jlimit(0.0f, static_cast<float>(maxScroll), tooltipScrollOffset + scrollDelta);
+  if (newOffset == tooltipScrollOffset)
+    return false;
+
+  tooltipScrollOffset = newOffset;
+  return true;
 }
 
 // === POPUP MENU CUSTOMIZATION ===

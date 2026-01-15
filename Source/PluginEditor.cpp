@@ -14,9 +14,8 @@
 //==============================================================================
 Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
     Vst_saturatorAudioProcessor &p)
-    : AudioProcessorEditor(&p), audioProcessor(p), tooltipWindow(this, 1500) {
-  // Ensure the tooltip window uses our custom LookAndFeel for drawing
-  tooltipWindow.setLookAndFeel(&customLookAndFeel);
+    : AudioProcessorEditor(&p), audioProcessor(p),
+      tooltipWindow(this, 1500, customLookAndFeel) {
 
   // Load build hash from version.txt
   juce::File versionFile;
@@ -86,11 +85,19 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
   // A. Saturation Globale
   configureSlider(
       saturationSlider, "drive",
-      juce::CharPointer_UTF8("Contrôle la quantité de saturation globale"));
+      juce::CharPointer_UTF8(
+          R"(DRIVE 🔥🐟
+Dose de saturation globale.
+Plus tu montes, plus tu crées d'harmoniques et de compression naturelle.
+Parfait pour épaissir un mix sans pousser l'EQ.)"));
 
-  configureSlider(shapeSlider, "shape",
-                  juce::CharPointer_UTF8(
-                      "Modifie la couleur et l'agressivité de la distorsion"));
+  configureSlider(
+      shapeSlider, "shape",
+      juce::CharPointer_UTF8(
+          R"(SHAPE 🎨🧪
+Change la courbure de la distorsion.
+Vers la gauche = doux/velouté, vers la droite = mordant/croustillant.
+Utilise-le pour choisir le caractère, pas juste le volume.)"));
 
   // Waveshape ComboBox with categorized sections
   // Note: Section headings are non-selectable (itemId = 0)
@@ -184,8 +191,11 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
 
   waveshapeCombo.setSelectedId(1); // Default: Tube
   waveshapeCombo.setLookAndFeel(&customLookAndFeel);
-  waveshapeCombo.setTooltip(
-      juce::CharPointer_UTF8("Choisissez le type d'algorithme de saturation"));
+  waveshapeCombo.setTooltip(juce::CharPointer_UTF8(
+      R"(WAVESHAPE 🧰🌊
+Choisis l'algorithme de saturation.
+Chaque mode colore différemment (tube, tape, bits, etc.).
+Tip : change ça avant de toucher 12 potards et pleurer. 😅)"));
   addAndMakeVisible(waveshapeCombo);
 
   attachSlider(saturationAttachment, "drive", saturationSlider);
@@ -198,20 +208,33 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
   configureEnableButton(
       lowEnableButton, "LOW",
       juce::CharPointer_UTF8(
-          "Active/Désactive le traitement de la bande basse"));
+          R"(LOW ON/OFF 🐠
+Active la bande basse.
+Utile pour saturer le grave sans bousiller les aigus.
+Si OFF = plus propre, moins de boum.)"));
   attachButton(lowEnableAttachment, "lowEnable", lowEnableButton);
 
   configureSlider(lowFreqSlider, "lowFreq",
                   juce::CharPointer_UTF8(
-                      "Fréquence de coupure de la bande basse (Crossover)"));
+                      R"(LOW FREQ 🥁
+Définit la fréquence de coupure de la bande basse.
+Plus bas = seulement sub, plus haut = plus de bas-médium.
+Place-la là où le kick dit "bonjour".)"));
 
   configureSlider(
       lowWarmthSlider, "lowWarmth",
       juce::CharPointer_UTF8(
-          "Ajoute de la chaleur et du corps aux basses fréquences"));
+          R"(LOW WARMTH 🧈
+Ajoute du gras harmonique dans le grave.
+Idéal pour rendre la basse plus ronde et audible sur petits HP.
+Trop ? ça devient soupe. 🍲)"));
 
   configureSlider(lowLevelSlider, "lowLevel",
-                  juce::CharPointer_UTF8("Volume de sortie de la bande basse"));
+                  juce::CharPointer_UTF8(
+                      R"(LOW LEVEL 🔉
+Règle le volume de la bande basse après traitement.
+Compense pour éviter un low qui mange tout.
+Un bon low, c'est comme du beurre : dosé. 😌)"));
 
   attachSlider(lowFreqAttachment, "lowFreq", lowFreqSlider);
   attachSlider(lowWarmthAttachment, "lowWarmth", lowWarmthSlider);
@@ -221,19 +244,33 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
   configureEnableButton(
       highEnableButton, "HIGH",
       juce::CharPointer_UTF8(
-          "Active/Désactive le traitement de la bande haute"));
+          R"(HIGH ON/OFF 🐟✨
+Active la bande haute.
+Utile pour ajouter du brillant sans toucher le bas.
+OFF = plus doux, moins de sifflantes.)"));
   attachButton(highEnableAttachment, "highEnable", highEnableButton);
 
   configureSlider(highFreqSlider, "highFreq",
                   juce::CharPointer_UTF8(
-                      "Fréquence de coupure de la bande haute (Crossover)"));
+                      R"(HIGH FREQ 🦻
+Définit la fréquence de coupure de la bande haute.
+Plus bas = plus d'aigus saturés, plus haut = juste l'air.
+Choisis la zone qui siffle.)"));
 
   configureSlider(
       highSoftnessSlider, "highSoftness",
-      juce::CharPointer_UTF8("Adoucit les hautes fréquences (effet ''Tape'')"));
+      juce::CharPointer_UTF8(
+          R"(HIGH SOFTNESS ☁️
+Adoucit les aigus façon "tape".
+Réduit le côté agressif après saturation.
+Parfait pour les oreilles fragiles (et les chats). 🐱)"));
 
   configureSlider(highLevelSlider, "highLevel",
-                  juce::CharPointer_UTF8("Volume de sortie de la bande haute"));
+                  juce::CharPointer_UTF8(
+                      R"(HIGH LEVEL 🔊
+Volume de la bande haute après traitement.
+Balance le brillant contre le grave.
+Trop haut = "couteau", trop bas = "doudou".)"));
 
   attachSlider(highFreqAttachment, "highFreq", highFreqSlider);
   attachSlider(highSoftnessAttachment, "highSoftness", highSoftnessSlider);
@@ -241,13 +278,25 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
 
   // D. Gain & Routing
   configureSlider(inputGainSlider, "inputGain",
-                  juce::CharPointer_UTF8("Gain d'entrée avant le traitement"));
+                  juce::CharPointer_UTF8(
+                      R"(INPUT GAIN 📥
+Gain d'entrée avant saturation.
+Plus tu pousses, plus tu forces l'étage de saturation.
+Attention : drive caché = chaos. 😈)"));
 
   configureSlider(mixSlider, "mix",
-                  juce::CharPointer_UTF8("Mélange Dry/Wet du signal global"));
+                  juce::CharPointer_UTF8(
+                      R"(MIX 🧪
+Blend Dry/Wet global.
+100% = full sauce, 0% = clean comme un poisson. 🐟
+Utilise 20-50% pour du gros sans casser.)"));
 
   configureSlider(outputGainSlider, "output",
-                  juce::CharPointer_UTF8("Gain de sortie final"));
+                  juce::CharPointer_UTF8(
+                      R"(OUTPUT GAIN 📤
+Gain de sortie final.
+Compense le niveau après saturation pour A/B juste.
+L'oreille préfère toujours le plus fort… donc triche pas. 😉)"));
 
   attachSlider(inputGainAttachment, "inputGain", inputGainSlider);
   attachSlider(mixAttachment, "mix", mixSlider);
@@ -257,37 +306,51 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
   prePostButton.setButtonText("Pre/Post");
   prePostButton.setLookAndFeel(&customLookAndFeel);
   prePostButton.setTooltip(juce::CharPointer_UTF8(
-      "Place le gain d'entrée avant ou après la saturation"));
+      R"(PRE/POST 🔀
+Choisit si le gain d'entrée est avant ou après la saturation.
+Pre = plus de drive, Post = ajuste niveau propre.
+C'est le bouton "où je mets le feu". 🔥)"));
   addAndMakeVisible(prePostButton);
   attachButton(prePostAttachment, "prePost", prePostButton);
 
   limiterButton.setButtonText("Limiter");
   limiterButton.setLookAndFeel(&customLookAndFeel);
-  limiterButton.setTooltip(
-      juce::CharPointer_UTF8("Active le limiteur de sécurité en sortie"));
+  limiterButton.setTooltip(juce::CharPointer_UTF8(
+      R"(LIMITER 🛡️
+Limiteur de sécurité en sortie.
+Évite les clips sauvages quand tu t'emballes.
+Ton mastering te remercie. 🙏)"));
   addAndMakeVisible(limiterButton);
   attachButton(limiterAttachment, "limiter", limiterButton);
 
   bypassButton.setButtonText("Bypass");
   bypassButton.setLookAndFeel(&customLookAndFeel);
-  bypassButton.setTooltip(
-      juce::CharPointer_UTF8("Désactive tout le traitement"));
+  bypassButton.setTooltip(juce::CharPointer_UTF8(
+      R"(BYPASS ⏸️
+Coupe tout le traitement.
+Compare rapidement "avec" vs "sans".
+Si tu ne sens rien… remonte le Drive. 😅)"));
   addAndMakeVisible(bypassButton);
   attachButton(bypassAttachment, "bypass", bypassButton);
 
   // E. Delta Monitoring
   deltaButton.setButtonText("DELTA");
   deltaButton.setLookAndFeel(&customLookAndFeel);
-  deltaButton.setTooltip(
-      juce::CharPointer_UTF8("Mode Delta: écouter uniquement les harmoniques "
-                             "ajoutées par la saturation (wet - dry)"));
+  deltaButton.setTooltip(juce::CharPointer_UTF8(
+      R"(DELTA 👂➖
+Écoute uniquement ce qui est ajouté (wet - dry).
+Super pour vérifier la coloration réelle.
+Si ça sonne bizarre, c'est normal. 🤓)"));
   addAndMakeVisible(deltaButton);
   attachButton(deltaAttachment, "delta", deltaButton);
 
   configureSlider(
       deltaGainSlider, "deltaGain",
       juce::CharPointer_UTF8(
-          "Gain du signal Delta (réduction de niveau pour la sécurité audio)"));
+          R"(DELTA GAIN 🎛️
+Réduit le niveau du signal Delta.
+Protège les oreilles quand les harmoniques crient.
+Moins fort = plus scientifique.)"));
 
   attachSlider(deltaGainAttachment, "deltaGain", deltaGainSlider);
 
@@ -369,7 +432,10 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
   currentPresetIndex = 0;
   presetsCombo.setLookAndFeel(&customLookAndFeel);
   presetsCombo.setTooltip(juce::CharPointer_UTF8(
-      "Sélectionnez un preset pour charger des réglages prédéfinis"));
+      R"(PRESETS 📚
+Charge des réglages prêts à l'emploi.
+Bon point de départ pour apprendre chaque potard.
+Tu peux tricher, c'est autorisé. 😇)"));
   presetsCombo.onChange = [this]() {
     int selectedId = presetsCombo.getSelectedId();
     if (selectedId > 0) {
@@ -395,15 +461,26 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
     addAndMakeVisible(btn);
   };
 
-  configureNavButton(presetLeftBtn, juce::CharPointer_UTF8("Preset précédent"));
-  configureNavButton(presetRightBtn, juce::CharPointer_UTF8("Preset suivant"));
+  configureNavButton(presetLeftBtn, juce::CharPointer_UTF8(
+                                       R"(Preset précédent ◀️
+Parcours les presets plus vite que le poisson.
+Parfait pour scroller sans ouvrir le menu.)"));
+  configureNavButton(presetRightBtn, juce::CharPointer_UTF8(
+                                        R"(Preset suivant ▶️
+Passe au preset suivant.
+Idéal pour auditionner en rafale.)"));
   presetLeftBtn.onClick = [this]() { navigatePreset(-1); };
   presetRightBtn.onClick = [this]() { navigatePreset(1); };
 
   // G. Waveshape navigation buttons
-  configureNavButton(waveLeftBtn,
-                     juce::CharPointer_UTF8("Waveform précédente"));
-  configureNavButton(waveRightBtn, juce::CharPointer_UTF8("Waveform suivante"));
+  configureNavButton(waveLeftBtn, juce::CharPointer_UTF8(
+                                      R"(Waveshape précédente ◀️
+Change d'algorithme sans ouvrir la liste.
+Pratique quand l'inspiration tape vite. ⚡️)"));
+  configureNavButton(waveRightBtn, juce::CharPointer_UTF8(
+                                       R"(Waveshape suivante ▶️
+Passe au waveshape suivant.
+C'est comme zapper des lampes de radio. 📻)"));
   waveLeftBtn.onClick = [this]() { navigateWaveshape(-1); };
   waveRightBtn.onClick = [this]() { navigateWaveshape(1); };
 

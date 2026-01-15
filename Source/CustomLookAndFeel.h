@@ -61,6 +61,9 @@ public:
   void drawTooltip(juce::Graphics &g, const juce::String &text, int width,
                    int height) override;
 
+  juce::Font getTooltipFont() const;
+  bool scrollTooltip(float deltaY);
+
   // Custom styling for PopupMenus (Lists)
   void drawPopupMenuBackground(juce::Graphics &g, int width,
                                int height) override;
@@ -104,6 +107,14 @@ public:
   juce::Font getPopupMenuFont() override;
 
 private:
+  static constexpr int tooltipMaxWidth = 300;
+  static constexpr int tooltipMaxHeight = 500;
+  static constexpr int tooltipPadding = 8;
+  juce::String lastTooltipText;
+  int lastTooltipContentHeight = 0;
+  int lastTooltipVisibleHeight = 0;
+  float tooltipScrollOffset = 0.0f;
+
 private:
   juce::Image indicatorImage;
   juce::Typeface::Ptr customTypeface;

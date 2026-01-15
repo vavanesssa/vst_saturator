@@ -21,6 +21,25 @@
 #include <JuceHeader.h>
 
 //==============================================================================
+class ScrollableTooltipWindow final : public juce::TooltipWindow {
+public:
+  ScrollableTooltipWindow(juce::Component *parent, int delayMs,
+                          CustomLookAndFeel &laf)
+      : juce::TooltipWindow(parent, delayMs), lookAndFeel(laf) {
+    setLookAndFeel(&lookAndFeel);
+    setInterceptsMouseClicks(true, true);
+  }
+
+  void mouseWheelMove(const juce::MouseEvent &,
+                      const juce::MouseWheelDetails &details) override {
+    if (lookAndFeel.scrollTooltip(details.deltaY))
+      repaint();
+  }
+
+private:
+  CustomLookAndFeel &lookAndFeel;
+};
+
 class Vst_saturatorAudioProcessorEditor : public juce::AudioProcessorEditor,
                                           private juce::Timer {
 public:
@@ -172,7 +191,7 @@ private:
   std::vector<float> localWaveform;
 
   // Tooltip window
-  juce::TooltipWindow tooltipWindow;
+  ScrollableTooltipWindow tooltipWindow;
 
   // Signature Link (Hyperlink)
   juce::HyperlinkButton signatureLink;
