@@ -68,8 +68,8 @@ private:
 
 class VisualizerGridComponent final : public juce::Component {
 public:
-  explicit VisualizerGridComponent(std::array<VisualizerPanelComponent *, 5>
-                                       panelComponents);
+  explicit VisualizerGridComponent(
+      std::array<VisualizerPanelComponent *, 5> panelComponents);
 
   void setExpandedPanelIndex(int index);
   void resized() override;
@@ -94,8 +94,9 @@ private:
   void updateFrameRate(double frameTimeMs);
   void setExpandedPanel(int index);
   void restorePanelState();
-  void storePanelState() const;
+  void storePanelState();
   VisualizerPanelComponent &panelForIndex(int index);
+  const VisualizerPanelComponent &panelForIndex(int index) const;
   void configurePanelModes();
 
   AnalyzerTap &tap;

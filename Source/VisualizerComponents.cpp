@@ -35,11 +35,9 @@ VisualizerMode labelToMode(const juce::String &label) {
 }
 } // namespace
 
-VisualizerPanelComponent::VisualizerPanelComponent(int index,
-                                                   const juce::String &panelTitle,
-                                                   juce::Colour panelTint)
-    : panelIndex(index), title(panelTitle), tint(panelTint),
-      expandButton("⤢") {
+VisualizerPanelComponent::VisualizerPanelComponent(
+    int index, const juce::String &panelTitle, juce::Colour panelTint)
+    : panelIndex(index), title(panelTitle), tint(panelTint), expandButton("⤢") {
   configureHeader();
 }
 
@@ -88,7 +86,8 @@ void VisualizerPanelComponent::configureHeader() {
   smoothingSelector.setSelectedId(2, juce::dontSendNotification);
 }
 
-void VisualizerPanelComponent::setPanelState(const VisualizerPanelState &newState) {
+void VisualizerPanelComponent::setPanelState(
+    const VisualizerPanelState &newState) {
   state = newState;
   modeSelector.setText(modeToLabel(state.mode), juce::dontSendNotification);
   prePostToggle.setToggleState(state.showPre, juce::dontSendNotification);
@@ -101,7 +100,8 @@ VisualizerPanelState VisualizerPanelComponent::getPanelState() const {
   return state;
 }
 
-void VisualizerPanelComponent::setFrameData(const VisualizerFrameData &newFrame) {
+void VisualizerPanelComponent::setFrameData(
+    const VisualizerFrameData &newFrame) {
   frame = newFrame;
 
   if (state.mode == VisualizerMode::Heat && frame.hasData) {
@@ -142,7 +142,8 @@ void VisualizerPanelComponent::updateExpandButton() {
 
 void VisualizerPanelComponent::updateModeAvailability() {
   for (int i = 0; i < 5; ++i) {
-    modeSelector.setItemEnabled(i + 1, modeAvailability[static_cast<size_t>(i)]);
+    modeSelector.setItemEnabled(i + 1,
+                                modeAvailability[static_cast<size_t>(i)]);
   }
 
   if (!modeAvailability[static_cast<size_t>(state.mode)]) {
@@ -191,10 +192,10 @@ void VisualizerPanelComponent::paint(juce::Graphics &g) {
       float norm = static_cast<float>(i) / 64.0f;
       float x = juce::jmap(norm, -1.0f, 1.0f);
       float y = std::tanh(x * drive);
-      float drawX = juce::jmap(x, -1.0f, 1.0f, curveArea.getX(),
-                               curveArea.getRight());
-      float drawY = juce::jmap(y, -1.0f, 1.0f, curveArea.getBottom(),
-                               curveArea.getY());
+      float drawX =
+          juce::jmap(x, -1.0f, 1.0f, curveArea.getX(), curveArea.getRight());
+      float drawY =
+          juce::jmap(y, -1.0f, 1.0f, curveArea.getBottom(), curveArea.getY());
       transferCurve.lineTo(drawX, drawY);
     }
     g.setColour(juce::Colours::white.withAlpha(0.5f));
@@ -285,9 +286,10 @@ void VisualizerPanelComponent::resized() {
   peakHoldToggle.setBounds(leftArea.removeFromLeft(48).reduced(2));
 }
 
-void VisualizerPanelComponent::drawWaveform(
-    juce::Graphics &g, juce::Rectangle<float> area,
-    const std::vector<float> &wave, juce::Colour colour) const {
+void VisualizerPanelComponent::drawWaveform(juce::Graphics &g,
+                                            juce::Rectangle<float> area,
+                                            const std::vector<float> &wave,
+                                            juce::Colour colour) const {
   if (wave.empty())
     return;
   if (wave.size() < 2)
@@ -297,7 +299,8 @@ void VisualizerPanelComponent::drawWaveform(
   const float midY = area.getCentreY();
   const float xStep = area.getWidth() / static_cast<float>(wave.size() - 1);
 
-  path.startNewSubPath(area.getX(), midY - wave.front() * area.getHeight() * 0.4f);
+  path.startNewSubPath(area.getX(),
+                       midY - wave.front() * area.getHeight() * 0.4f);
   for (size_t i = 1; i < wave.size(); ++i) {
     float x = area.getX() + static_cast<float>(i) * xStep;
     float y = midY - wave[i] * area.getHeight() * 0.4f;
@@ -321,7 +324,8 @@ void VisualizerPanelComponent::drawSpectrumBars(
 
   g.setColour(colour);
   for (int i = 0; i < barCount; ++i) {
-    float magnitude = juce::jlimit(0.0f, 1.0f, spectrum[static_cast<size_t>(i)]);
+    float magnitude =
+        juce::jlimit(0.0f, 1.0f, spectrum[static_cast<size_t>(i)]);
     float barHeight = magnitude * area.getHeight();
     g.fillRect(area.getX() + i * barWidth, area.getBottom() - barHeight,
                barWidth * 0.8f, barHeight);
@@ -353,18 +357,18 @@ void VisualizerPanelComponent::drawHeatmap(juce::Graphics &g,
   if (heatHistory.empty())
     return;
 
-  const float rowHeight = area.getHeight() /
-                          static_cast<float>(heatHistory.size());
+  const float rowHeight =
+      area.getHeight() / static_cast<float>(heatHistory.size());
   for (size_t row = 0; row < heatHistory.size(); ++row) {
     const auto &spectrum = heatHistory[row];
     const float y = area.getY() + static_cast<float>(row) * rowHeight;
-    const float binWidth = area.getWidth() /
-                           static_cast<float>(spectrum.size());
+    const float binWidth =
+        area.getWidth() / static_cast<float>(spectrum.size());
 
     for (size_t i = 0; i < spectrum.size(); ++i) {
       float intensity = juce::jlimit(0.0f, 1.0f, spectrum[i]);
-      g.setColour(juce::Colour::fromHSV(0.1f + intensity * 0.1f, 0.8f, intensity,
-                                        0.6f));
+      g.setColour(juce::Colour::fromHSV(0.1f + intensity * 0.1f, 0.8f,
+                                        intensity, 0.6f));
       g.fillRect(area.getX() + static_cast<float>(i) * binWidth, y, binWidth,
                  rowHeight);
     }
@@ -384,8 +388,8 @@ void VisualizerPanelComponent::drawCrestMeter(juce::Graphics &g,
 
   g.setColour(juce::Colours::white.withAlpha(0.8f));
   g.setFont(juce::Font(11.0f, juce::Font::bold));
-  g.drawText("Crest Δ " + juce::String(frame.crestChange, 2), meter.toNearestInt(),
-             juce::Justification::centred, true);
+  g.drawText("Crest Δ " + juce::String(frame.crestChange, 2),
+             meter.toNearestInt(), juce::Justification::centred, true);
 }
 
 void VisualizerPanelComponent::drawHarmonicBalance(
@@ -398,10 +402,9 @@ void VisualizerPanelComponent::drawHarmonicBalance(
   g.setColour(juce::Colours::lightgreen.withAlpha(0.8f));
   g.fillRoundedRectangle(lowFill, 6.0f);
   g.setColour(juce::Colours::lightblue.withAlpha(0.6f));
-  g.fillRoundedRectangle(
-      meter.withTrimmedLeft(lowFill.getWidth()).withWidth(
-          meter.getWidth() - lowFill.getWidth()),
-      6.0f);
+  g.fillRoundedRectangle(meter.withTrimmedLeft(lowFill.getWidth())
+                             .withWidth(meter.getWidth() - lowFill.getWidth()),
+                         6.0f);
 
   g.setColour(juce::Colours::white.withAlpha(0.8f));
   g.setFont(juce::Font(11.0f, juce::Font::bold));
@@ -424,8 +427,8 @@ void VisualizerGridComponent::setExpandedPanelIndex(int index) {
 }
 
 void VisualizerGridComponent::resized() {
-  auto bounds = getLocalBounds().reduced(12);
-  const int spacing = 12;
+  auto bounds = getLocalBounds(); // No padding - full area
+  const int spacing = 4;          // Minimal spacing between panels
 
   if (expandedPanelIndex >= 0 && expandedPanelIndex < 5) {
     for (int i = 0; i < 5; ++i) {
@@ -434,8 +437,7 @@ void VisualizerGridComponent::resized() {
         panel->setVisible(i == expandedPanelIndex);
     }
 
-    panels[static_cast<size_t>(expandedPanelIndex)]
-        ->setBounds(bounds.reduced(4));
+    panels[static_cast<size_t>(expandedPanelIndex)]->setBounds(bounds);
     return;
   }
 
@@ -582,16 +584,14 @@ void VisualizerTabComponent::setExpandedPanel(int index) {
 }
 
 void VisualizerTabComponent::restorePanelState() {
-  auto visualizerState = stateTree.getOrCreateChildWithName(
-      "visualizers", nullptr);
+  auto visualizerState =
+      stateTree.getOrCreateChildWithName("visualizers", nullptr);
 
-  expandedPanelIndex =
-      visualizerState.getProperty("expandedPanel", -1);
+  expandedPanelIndex = visualizerState.getProperty("expandedPanel", -1);
 
   for (int i = 0; i < 5; ++i) {
-    auto panelStateTree =
-        visualizerState.getOrCreateChildWithName("panel" + juce::String(i),
-                                                 nullptr);
+    auto panelStateTree = visualizerState.getOrCreateChildWithName(
+        "panel" + juce::String(i), nullptr);
     VisualizerPanelState panelState;
     panelState.mode = static_cast<VisualizerMode>(
         static_cast<int>(panelStateTree.getProperty("mode", 0)));
@@ -606,9 +606,9 @@ void VisualizerTabComponent::restorePanelState() {
   grid.setExpandedPanelIndex(expandedPanelIndex);
 }
 
-void VisualizerTabComponent::storePanelState() const {
-  auto visualizerState = stateTree.getOrCreateChildWithName(
-      "visualizers", nullptr);
+void VisualizerTabComponent::storePanelState() {
+  auto visualizerState =
+      stateTree.getOrCreateChildWithName("visualizers", nullptr);
   visualizerState.setProperty("expandedPanel", expandedPanelIndex, nullptr);
 
   for (int i = 0; i < 5; ++i) {
@@ -623,6 +623,11 @@ void VisualizerTabComponent::storePanelState() const {
 }
 
 VisualizerPanelComponent &VisualizerTabComponent::panelForIndex(int index) {
+  return *panels[static_cast<size_t>(index)];
+}
+
+const VisualizerPanelComponent &
+VisualizerTabComponent::panelForIndex(int index) const {
   return *panels[static_cast<size_t>(index)];
 }
 

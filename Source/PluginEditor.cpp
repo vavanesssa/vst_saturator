@@ -9,17 +9,18 @@
 */
 
 #include "PluginEditor.h"
-#include "PluginProcessor.h"
 #include "BinaryData.h"
+#include "PluginProcessor.h"
 
 //==============================================================================
 TabLookAndFeel::TabLookAndFeel(CustomLookAndFeel &base)
     : baseLookAndFeel(base) {}
 
-void TabLookAndFeel::drawButtonBackground(
-    juce::Graphics &g, juce::Button &button,
-    const juce::Colour &backgroundColour,
-    bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) {
+void TabLookAndFeel::drawButtonBackground(juce::Graphics &g,
+                                          juce::Button &button,
+                                          const juce::Colour &backgroundColour,
+                                          bool shouldDrawButtonAsHighlighted,
+                                          bool shouldDrawButtonAsDown) {
   auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
   float cornerRadius = 8.0f;
 
@@ -36,8 +37,7 @@ void TabLookAndFeel::drawButtonBackground(
   g.drawRoundedRectangle(bounds, cornerRadius, 1.5f);
 }
 
-void TabLookAndFeel::drawButtonText(juce::Graphics &g,
-                                    juce::TextButton &button,
+void TabLookAndFeel::drawButtonText(juce::Graphics &g, juce::TextButton &button,
                                     bool shouldDrawButtonAsHighlighted,
                                     bool shouldDrawButtonAsDown) {
   juce::ignoreUnused(shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
@@ -157,18 +157,16 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
 
   // A. Saturation Globale
   // A. Saturation Globale
-  configureSlider(
-      saturationSlider, "drive",
-      juce::CharPointer_UTF8(
-          R"(DRIVE 🔥🐟
+  configureSlider(saturationSlider, "drive",
+                  juce::CharPointer_UTF8(
+                      R"(DRIVE 🔥🐟
 Dose de saturation globale.
 Plus tu montes, plus tu crées d'harmoniques et de compression naturelle.
 Parfait pour épaissir un mix sans pousser l'EQ.)"));
 
-  configureSlider(
-      shapeSlider, "shape",
-      juce::CharPointer_UTF8(
-          R"(SHAPE 🎨🧪
+  configureSlider(shapeSlider, "shape",
+                  juce::CharPointer_UTF8(
+                      R"(SHAPE 🎨🧪
 Change la courbure de la distorsion.
 Vers la gauche = doux/velouté, vers la droite = mordant/croustillant.
 Utilise-le pour choisir le caractère, pas juste le volume.)"));
@@ -279,10 +277,9 @@ Tip : change ça avant de toucher 12 potards et pleurer. 😅)"));
           audioProcessor.apvts, "waveshape", waveshapeCombo);
 
   // B. Bande LOW
-  configureEnableButton(
-      lowEnableButton, "LOW",
-      juce::CharPointer_UTF8(
-          R"(LOW ON/OFF 🐠
+  configureEnableButton(lowEnableButton, "LOW",
+                        juce::CharPointer_UTF8(
+                            R"(LOW ON/OFF 🐠
 Active la bande basse.
 Utile pour saturer le grave sans bousiller les aigus.
 Si OFF = plus propre, moins de boum.)"));
@@ -295,10 +292,9 @@ Définit la fréquence de coupure de la bande basse.
 Plus bas = seulement sub, plus haut = plus de bas-médium.
 Place-la là où le kick dit "bonjour".)"));
 
-  configureSlider(
-      lowWarmthSlider, "lowWarmth",
-      juce::CharPointer_UTF8(
-          R"(LOW WARMTH 🧈
+  configureSlider(lowWarmthSlider, "lowWarmth",
+                  juce::CharPointer_UTF8(
+                      R"(LOW WARMTH 🧈
 Ajoute du gras harmonique dans le grave.
 Idéal pour rendre la basse plus ronde et audible sur petits HP.
 Trop ? ça devient soupe. 🍲)"));
@@ -315,10 +311,9 @@ Un bon low, c'est comme du beurre : dosé. 😌)"));
   attachSlider(lowLevelAttachment, "lowLevel", lowLevelSlider);
 
   // C. Bande HIGH
-  configureEnableButton(
-      highEnableButton, "HIGH",
-      juce::CharPointer_UTF8(
-          R"(HIGH ON/OFF 🐟✨
+  configureEnableButton(highEnableButton, "HIGH",
+                        juce::CharPointer_UTF8(
+                            R"(HIGH ON/OFF 🐟✨
 Active la bande haute.
 Utile pour ajouter du brillant sans toucher le bas.
 OFF = plus doux, moins de sifflantes.)"));
@@ -331,10 +326,9 @@ Définit la fréquence de coupure de la bande haute.
 Plus bas = plus d'aigus saturés, plus haut = juste l'air.
 Choisis la zone qui siffle.)"));
 
-  configureSlider(
-      highSoftnessSlider, "highSoftness",
-      juce::CharPointer_UTF8(
-          R"(HIGH SOFTNESS ☁️
+  configureSlider(highSoftnessSlider, "highSoftness",
+                  juce::CharPointer_UTF8(
+                      R"(HIGH SOFTNESS ☁️
 Adoucit les aigus façon "tape".
 Réduit le côté agressif après saturation.
 Parfait pour les oreilles fragiles (et les chats). 🐱)"));
@@ -418,10 +412,9 @@ Si ça sonne bizarre, c'est normal. 🤓)"));
   addAndMakeVisible(deltaButton);
   attachButton(deltaAttachment, "delta", deltaButton);
 
-  configureSlider(
-      deltaGainSlider, "deltaGain",
-      juce::CharPointer_UTF8(
-          R"(DELTA GAIN 🎛️
+  configureSlider(deltaGainSlider, "deltaGain",
+                  juce::CharPointer_UTF8(
+                      R"(DELTA GAIN 🎛️
 Réduit le niveau du signal Delta.
 Protège les oreilles quand les harmoniques crient.
 Moins fort = plus scientifique.)"));
@@ -536,11 +529,11 @@ Tu peux tricher, c'est autorisé. 😇)"));
   };
 
   configureNavButton(presetLeftBtn, juce::CharPointer_UTF8(
-                                       R"(Preset précédent ◀️
+                                        R"(Preset précédent ◀️
 Parcours les presets plus vite que le poisson.
 Parfait pour scroller sans ouvrir le menu.)"));
   configureNavButton(presetRightBtn, juce::CharPointer_UTF8(
-                                        R"(Preset suivant ▶️
+                                         R"(Preset suivant ▶️
 Passe au preset suivant.
 Idéal pour auditionner en rafale.)"));
   presetLeftBtn.onClick = [this]() { navigatePreset(-1); };
@@ -766,9 +759,8 @@ void Vst_saturatorAudioProcessorEditor::paint(juce::Graphics &g) {
                knobWidth, labelHeight, juce::Justification::centred, true);
 
     // Column 4: MASTER
-    g.drawText("Saturation", col4X + 5,
-               row1Y - labelHeight - labelMarginAbove, knobWidth, labelHeight,
-               juce::Justification::centred, true);
+    g.drawText("Saturation", col4X + 5, row1Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
     g.drawText("Shape", col4X + 5, row2Y - labelHeight - labelMarginAbove,
                knobWidth, labelHeight, juce::Justification::centred, true);
     g.drawText("Mix", col4X + 5, row3Y - labelHeight - labelMarginAbove,
@@ -905,8 +897,8 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   knobsTabButton.setBounds(
       scaleDesignBounds(currentTabX, tabStartY, knobsTabWidth, tabHeight));
   currentTabX += knobsTabWidth + tabSpacing;
-  page1TabButton.setBounds(
-      scaleDesignBounds(currentTabX, tabStartY, visualizersTabWidth, tabHeight));
+  page1TabButton.setBounds(scaleDesignBounds(currentTabX, tabStartY,
+                                             visualizersTabWidth, tabHeight));
   currentTabX += visualizersTabWidth + tabSpacing;
   page2TabButton.setBounds(
       scaleDesignBounds(currentTabX, tabStartY, numberTabWidth, tabHeight));
@@ -1001,10 +993,13 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   signatureLink.setBounds(
       scaleDesignBounds(DESIGN_WIDTH - 350, DESIGN_HEIGHT - 32, 340, 26));
 
-  const int visualizerTop = 100;
-  const int visualizerBottomPadding = 60;
+  // Visualizer tab takes full width (no Steve image margin)
+  const int visualizerTop = 80;
+  const int visualizerBottomPadding = 20;
+  const int visualizerSidePadding = 10;
   visualizerTab.setBounds(scaleDesignBounds(
-      contentStartX, visualizerTop, contentWidth,
+      visualizerSidePadding, visualizerTop,
+      DESIGN_WIDTH - visualizerSidePadding * 2,
       DESIGN_HEIGHT - visualizerTop - visualizerBottomPadding));
 
   repaint();
