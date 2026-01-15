@@ -137,17 +137,22 @@ Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
     addAndMakeVisible(button);
   };
 
-  configureTabButton(
-      knobsTabButton, "KNOBS",
-      juce::Colour::fromFloatRGBA(0.98f, 0.94f, 0.86f, 1.0f));
-  configureTabButton(
-      visualizerTabButton, "VISUALIZER",
-      juce::Colour::fromFloatRGBA(1.0f, 0.82f, 0.88f, 1.0f));
-  configureTabButton(
-      thirdTabButton, "THIRD",
-      juce::Colour::fromFloatRGBA(0.88f, 0.82f, 1.0f, 1.0f));
+  const auto tabBaseColour =
+      juce::Colour::fromFloatRGBA(0.96f, 0.92f, 0.84f, 1.0f);
+  configureTabButton(knobsTabButton, "KNOBS", tabBaseColour);
+  configureTabButton(page1TabButton, "1", tabBaseColour);
+  configureTabButton(page2TabButton, "2", tabBaseColour);
+  configureTabButton(page3TabButton, "3", tabBaseColour);
+  configureTabButton(page4TabButton, "4", tabBaseColour);
 
   knobsTabButton.setToggleState(true, juce::dontSendNotification);
+  activeTab = TabPage::Knobs;
+
+  knobsTabButton.onClick = [this]() { setActiveTab(TabPage::Knobs); };
+  page1TabButton.onClick = [this]() { setActiveTab(TabPage::Page1); };
+  page2TabButton.onClick = [this]() { setActiveTab(TabPage::Page2); };
+  page3TabButton.onClick = [this]() { setActiveTab(TabPage::Page3); };
+  page4TabButton.onClick = [this]() { setActiveTab(TabPage::Page4); };
 
   // A. Saturation Globale
   // A. Saturation Globale
@@ -577,9 +582,48 @@ C'est comme zapper des lampes de radio. 📻)"));
       customLookAndFeel.getCustomFont(24.0f, juce::Font::bold), false,
       juce::Justification::bottomRight);
   addAndMakeVisible(signatureLink);
+
+  updateTabVisibility();
 }
 
 Vst_saturatorAudioProcessorEditor::~Vst_saturatorAudioProcessorEditor() {}
+
+//==============================================================================
+void Vst_saturatorAudioProcessorEditor::setActiveTab(TabPage tab) {
+  activeTab = tab;
+  updateTabVisibility();
+  repaint();
+}
+
+void Vst_saturatorAudioProcessorEditor::updateTabVisibility() {
+  const bool showKnobs = activeTab == TabPage::Knobs;
+
+  saturationSlider.setVisible(showKnobs);
+  shapeSlider.setVisible(showKnobs);
+  waveshapeCombo.setVisible(showKnobs);
+  lowEnableButton.setVisible(showKnobs);
+  lowFreqSlider.setVisible(showKnobs);
+  lowWarmthSlider.setVisible(showKnobs);
+  lowLevelSlider.setVisible(showKnobs);
+  highEnableButton.setVisible(showKnobs);
+  highFreqSlider.setVisible(showKnobs);
+  highSoftnessSlider.setVisible(showKnobs);
+  highLevelSlider.setVisible(showKnobs);
+  inputGainSlider.setVisible(showKnobs);
+  mixSlider.setVisible(showKnobs);
+  outputGainSlider.setVisible(showKnobs);
+  prePostButton.setVisible(showKnobs);
+  limiterButton.setVisible(showKnobs);
+  bypassButton.setVisible(showKnobs);
+  deltaButton.setVisible(showKnobs);
+  deltaGainSlider.setVisible(showKnobs);
+  presetsCombo.setVisible(showKnobs);
+  presetLeftBtn.setVisible(showKnobs);
+  presetRightBtn.setVisible(showKnobs);
+  waveLeftBtn.setVisible(showKnobs);
+  waveRightBtn.setVisible(showKnobs);
+  signatureLink.setVisible(showKnobs);
+}
 
 //==============================================================================
 juce::Rectangle<int>
@@ -630,27 +674,35 @@ void Vst_saturatorAudioProcessorEditor::paint(juce::Graphics &g) {
   // fillPath.lineTo(DESIGN_WIDTH, DESIGN_HEIGHT / 2); // Close properly based
   // on logic but straight stroke is cleaner for "Saturn" style usually.
 
-  // Draw steve image on the left side - full height with proper aspect ratio
-  // Check if audio is playing (Threshold ~ -50dB)
-  float currentLevel =
-      audioProcessor.currentRMSLevel.load(std::memory_order_relaxed);
-  bool isTalking = currentLevel > 0.005f;
+  // Title (top-left, Serum style)
+  g.setColour(juce::Colour::fromFloatRGBA(0.35f, 0.2f, 0.1f, 1.0f));
+  g.setFont(customLookAndFeel.getCustomFont(28.0f, juce::Font::bold));
+  g.drawText("STEVERATOR", 20, 18, 260, 40, juce::Justification::centredLeft,
+             true);
 
-  // === Draw Steve Image ===
-  juce::Image *imgToDraw = &steveImage;
+  if (activeTab == TabPage::Knobs) {
+    // Draw steve image on the left side - full height with proper aspect ratio
+    // Check if audio is playing (Threshold ~ -50dB)
+    float currentLevel =
+        audioProcessor.currentRMSLevel.load(std::memory_order_relaxed);
+    bool isTalking = currentLevel > 0.005f;
 
-  // If talking and we have the second image, swap!
-  if (isTalking && !steve2Image.isNull()) {
-    imgToDraw = &steve2Image;
-  }
+    // === Draw Steve Image ===
+    juce::Image *imgToDraw = &steveImage;
 
-  if (imgToDraw != nullptr && !imgToDraw->isNull()) {
-    juce::Rectangle<int> imageBounds(20, 20, 440, DESIGN_HEIGHT - 40);
-    // Draw at 100% opacity
-    g.setOpacity(1.0f);
-    g.drawImageWithin(*imgToDraw, imageBounds.getX(), imageBounds.getY(),
-                      imageBounds.getWidth(), imageBounds.getHeight(),
-                      juce::RectanglePlacement::centred, false);
+    // If talking and we have the second image, swap!
+    if (isTalking && !steve2Image.isNull()) {
+      imgToDraw = &steve2Image;
+    }
+
+    if (imgToDraw != nullptr && !imgToDraw->isNull()) {
+      juce::Rectangle<int> imageBounds(20, 20, 440, DESIGN_HEIGHT - 40);
+      // Draw at 100% opacity
+      g.setOpacity(1.0f);
+      g.drawImageWithin(*imgToDraw, imageBounds.getX(), imageBounds.getY(),
+                        imageBounds.getWidth(), imageBounds.getHeight(),
+                        juce::RectanglePlacement::centred, false);
+    }
   }
 
   // === DRAW ALL LABELS WITH CUSTOM FONT (like min/max values) ===
@@ -699,52 +751,80 @@ void Vst_saturatorAudioProcessorEditor::paint(juce::Graphics &g) {
   const int footerButtonWidth = 180;
   const int deltaKnobWidth = 110;
 
-  // Top bar labels
-  g.drawText("PRESETS", presetStartX, topBarY - labelHeight - 5,
-             navBtnWidth * 2 + comboWidth + navSpacing * 2, labelHeight,
-             juce::Justification::centred, true);
-  g.drawText("WAVE", waveStartX + navBtnWidth + navSpacing,
-             topBarY - labelHeight - 5, comboWidth, labelHeight,
-             juce::Justification::centred, true);
+  if (activeTab == TabPage::Knobs) {
+    // Top bar labels
+    g.drawText("PRESETS", presetStartX, topBarY - labelHeight - 5,
+               navBtnWidth * 2 + comboWidth + navSpacing * 2, labelHeight,
+               juce::Justification::centred, true);
+    g.drawText("WAVE", waveStartX + navBtnWidth + navSpacing,
+               topBarY - labelHeight - 5, comboWidth, labelHeight,
+               juce::Justification::centred, true);
 
-  // Column 1: Input + Output
-  g.drawText("Input", col1X + 5, row2Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
-  g.drawText("Output", col1X + 5, row3Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
+    // Column 1: Input + Output
+    g.drawText("Input", col1X + 5, row2Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
+    g.drawText("Output", col1X + 5, row3Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
 
-  // Column 2: LOW band
-  g.drawText("Low Freq", col2X + 5, row1Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
-  g.drawText("Low Warmth", col2X + 5, row2Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
-  g.drawText("Low Level", col2X + 5, row3Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
+    // Column 2: LOW band
+    g.drawText("Low Freq", col2X + 5, row1Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
+    g.drawText("Low Warmth", col2X + 5, row2Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
+    g.drawText("Low Level", col2X + 5, row3Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
 
-  // Column 3: HIGH band
-  g.drawText("High Freq", col3X + 5, row1Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
-  g.drawText("High Softness", col3X + 5, row2Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
-  g.drawText("High Level", col3X + 5, row3Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
+    // Column 3: HIGH band
+    g.drawText("High Freq", col3X + 5, row1Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
+    g.drawText("High Softness", col3X + 5,
+               row2Y - labelHeight - labelMarginAbove, knobWidth, labelHeight,
+               juce::Justification::centred, true);
+    g.drawText("High Level", col3X + 5, row3Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
 
-  // Column 4: MASTER
-  g.drawText("Saturation", col4X + 5, row1Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
-  g.drawText("Shape", col4X + 5, row2Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
-  g.drawText("Mix", col4X + 5, row3Y - labelHeight - labelMarginAbove,
-             knobWidth, labelHeight, juce::Justification::centred, true);
+    // Column 4: MASTER
+    g.drawText("Saturation", col4X + 5,
+               row1Y - labelHeight - labelMarginAbove, knobWidth, labelHeight,
+               juce::Justification::centred, true);
+    g.drawText("Shape", col4X + 5, row2Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
+    g.drawText("Mix", col4X + 5, row3Y - labelHeight - labelMarginAbove,
+               knobWidth, labelHeight, juce::Justification::centred, true);
 
-  // Delta Gain label
-  const int footerTotalWidth =
-      footerButtonWidth * 4 + columnSpacing * 1.5 + deltaKnobWidth;
-  const int footerStartX = (DESIGN_WIDTH - footerTotalWidth) / 2;
-  g.drawText("Delta Gain",
-             footerStartX + (footerButtonWidth + columnSpacing / 3) * 4 + 10,
-             footerY - 10 - labelHeight - labelMarginAbove, deltaKnobWidth,
-             labelHeight, juce::Justification::centred, true);
+    // Delta Gain label
+    const int footerTotalWidth =
+        footerButtonWidth * 4 + columnSpacing * 1.5 + deltaKnobWidth;
+    const int footerStartX = (DESIGN_WIDTH - footerTotalWidth) / 2;
+    g.drawText("Delta Gain",
+               footerStartX + (footerButtonWidth + columnSpacing / 3) * 4 + 10,
+               footerY - 10 - labelHeight - labelMarginAbove, deltaKnobWidth,
+               labelHeight, juce::Justification::centred, true);
+  } else {
+    juce::String pageLabel;
+    switch (activeTab) {
+    case TabPage::Page1:
+      pageLabel = "1";
+      break;
+    case TabPage::Page2:
+      pageLabel = "2";
+      break;
+    case TabPage::Page3:
+      pageLabel = "3";
+      break;
+    case TabPage::Page4:
+      pageLabel = "4";
+      break;
+    default:
+      pageLabel = "";
+      break;
+    }
+
+    g.setColour(juce::Colour::fromFloatRGBA(0.5f, 0.3f, 0.1f, 0.6f));
+    g.setFont(customLookAndFeel.getCustomFont(140.0f, juce::Font::bold));
+    g.drawText(pageLabel, 0, 0, DESIGN_WIDTH, DESIGN_HEIGHT,
+               juce::Justification::centred, true);
+  }
 
   // Build info is now a HyperlinkButton (signatureLink)
 }
@@ -825,23 +905,34 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   const int comboHeight = 35;
   const int navSpacing = 5;
 
-  // Tabs (top-left)
-  const int tabStartX = 20;
+  // Tabs (top-left) with title space
   const int tabStartY = 20;
   const int tabHeight = 40;
   const int tabSpacing = 8;
-  const int knobsTabWidth = 120;
-  const int visualizerTabWidth = 170;
-  const int thirdTabWidth = 110;
+  const int knobsTabWidth = 110;
+  const int numberTabWidth = 40;
 
+  const auto titleFont =
+      customLookAndFeel.getCustomFont(28.0f, juce::Font::bold);
+  const int titleWidth =
+      static_cast<int>(titleFont.getStringWidthFloat("STEVERATOR")) + 20;
+  const int tabStartX = 20 + titleWidth + 12;
+
+  int currentTabX = tabStartX;
   knobsTabButton.setBounds(
-      scaleDesignBounds(tabStartX, tabStartY, knobsTabWidth, tabHeight));
-  visualizerTabButton.setBounds(scaleDesignBounds(
-      tabStartX + knobsTabWidth + tabSpacing, tabStartY, visualizerTabWidth,
-      tabHeight));
-  thirdTabButton.setBounds(scaleDesignBounds(
-      tabStartX + knobsTabWidth + tabSpacing + visualizerTabWidth + tabSpacing,
-      tabStartY, thirdTabWidth, tabHeight));
+      scaleDesignBounds(currentTabX, tabStartY, knobsTabWidth, tabHeight));
+  currentTabX += knobsTabWidth + tabSpacing;
+  page1TabButton.setBounds(
+      scaleDesignBounds(currentTabX, tabStartY, numberTabWidth, tabHeight));
+  currentTabX += numberTabWidth + tabSpacing;
+  page2TabButton.setBounds(
+      scaleDesignBounds(currentTabX, tabStartY, numberTabWidth, tabHeight));
+  currentTabX += numberTabWidth + tabSpacing;
+  page3TabButton.setBounds(
+      scaleDesignBounds(currentTabX, tabStartY, numberTabWidth, tabHeight));
+  currentTabX += numberTabWidth + tabSpacing;
+  page4TabButton.setBounds(
+      scaleDesignBounds(currentTabX, tabStartY, numberTabWidth, tabHeight));
 
   // PRESETS section (left side of top bar, after Steve image area)
   const int presetStartX = 480;

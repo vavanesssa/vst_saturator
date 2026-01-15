@@ -189,10 +189,18 @@ private:
   CustomLookAndFeel customLookAndFeel;
   TabLookAndFeel tabLookAndFeel;
 
+  enum class TabPage { Knobs, Page1, Page2, Page3, Page4 };
+
+  void setActiveTab(TabPage tab);
+  void updateTabVisibility();
+
   // Tabs (top-left navigation)
   juce::TextButton knobsTabButton{"KNOBS"};
-  juce::TextButton visualizerTabButton{"VISUALIZER"};
-  juce::TextButton thirdTabButton{"THIRD"};
+  juce::TextButton page1TabButton{"1"};
+  juce::TextButton page2TabButton{"2"};
+  juce::TextButton page3TabButton{"3"};
+  juce::TextButton page4TabButton{"4"};
+  TabPage activeTab = TabPage::Knobs;
 
   // Steve image for left side display
   juce::Image steveImage;
