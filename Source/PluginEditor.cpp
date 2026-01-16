@@ -782,9 +782,7 @@ void Vst_saturatorAudioProcessorEditor::refreshDevTools() {
       juce::String(getWidth()) + "x" + juce::String(getHeight());
 
   devToolsPopover.setMetrics(metrics);
-  devToolsPopover.repaint();
 }
-
 //==============================================================================
 juce::Rectangle<int>
 Vst_saturatorAudioProcessorEditor::scaleDesignBounds(int x, int y, int width,
