@@ -728,8 +728,14 @@ void Vst_saturatorAudioProcessorEditor::updateTabVisibility() {
   visualizerTab.setActive(showVisualizers);
 }
 
-void Vst_saturatorAudioProcessorEditor::timerCallback() { refreshDevTools(); }
+void Vst_saturatorAudioProcessorEditor::timerCallback() {
+  if (!devToolsOpen) {
+    stopTimer();
+    return;
+  }
 
+  refreshDevTools();
+}
 juce::String Vst_saturatorAudioProcessorEditor::tabLabel(TabPage tab) const {
   switch (tab) {
   case TabPage::Knobs:
