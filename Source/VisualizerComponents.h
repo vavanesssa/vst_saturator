@@ -86,6 +86,15 @@ public:
   ~VisualizerTabComponent() override;
 
   void setActive(bool shouldBeActive);
+  /** Returns the time in milliseconds taken to render the most recent frame.
+      Intended for diagnostic and performance monitoring purposes. */
+  double getLastFrameTimeMs() const;
+  /** Returns the current refresh interval in milliseconds used by the timer.
+      Intended for diagnostic and tuning purposes, not for control flow. */
+  double getRefreshIntervalMs() const;
+  /** Returns true if the visualizer is currently active and updating frames.
+      Intended for status/diagnostic checks rather than state control. */
+  bool isActiveNow() const;
   void resized() override;
   void paint(juce::Graphics &g) override;
 

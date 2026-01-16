@@ -58,7 +58,41 @@ private:
   CustomLookAndFeel &baseLookAndFeel;
 };
 
-class Vst_saturatorAudioProcessorEditor : public juce::AudioProcessorEditor {
+struct DevToolsMetrics {
+  double cpuPercent = 0.0;
+  double sampleRate = 0.0;
+  int blockSize = 0;
+  int latencySamples = 0;
+  int inputChannels = 0;
+  int outputChannels = 0;
+  int parameterCount = 0;
+  double uiFrameTimeMs = 0.0;
+  double uiFps = 0.0;
+  double visualizerFrameTimeMs = 0.0;
+  double visualizerRefreshMs = 0.0;
+  double visualizerFps = 0.0;
+  float scaleFactor = 1.0f;
+  juce::String buildHash;
+  juce::String activeTabLabel;
+  bool visualizersActive = false;
+  float currentRms = 0.0f;
+  juce::String windowSize;
+};
+
+class DevToolsPopover final : public juce::Component {
+public:
+  explicit DevToolsPopover(CustomLookAndFeel &laf);
+  void setMetrics(const DevToolsMetrics &newMetrics);
+  void paint(juce::Graphics &g) override;
+
+private:
+  CustomLookAndFeel &lookAndFeel;
+  DevToolsMetrics metrics;
+  juce::StringArray lines;
+};
+
+class Vst_saturatorAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                          private juce::Timer {
 public:
   // Constructor: Takes a reference to the Processor so we can access
   // parameters.
@@ -75,6 +109,12 @@ public:
   void resized() override;
 
 private:
+  enum class TabPage { Knobs, Visualizers, Page2, Page3, Page4 };
+
+  void timerCallback() override;
+  juce::String tabLabel(TabPage tab) const;
+  void refreshDevTools();
+
   Vst_saturatorAudioProcessor &audioProcessor;
 
   // === GLOBAL SCALING CONSTANTS ===
@@ -186,8 +226,6 @@ private:
   CustomLookAndFeel customLookAndFeel;
   TabLookAndFeel tabLookAndFeel;
 
-  enum class TabPage { Knobs, Visualizers, Page2, Page3, Page4 };
-
   void setActiveTab(TabPage tab);
   void updateTabVisibility();
 
@@ -217,6 +255,13 @@ private:
 
   // Tooltip window
   ScrollableTooltipWindow tooltipWindow;
+
+  // DevTools UI
+  juce::TextButton devToolsButton{"🐞"};
+  DevToolsPopover devToolsPopover;
+  bool devToolsOpen = false;
+  double lastUiPaintMs = 0.0;
+  double uiFrameTimeMs = 0.0;
 
   // Signature Link (Hyperlink)
   juce::HyperlinkButton signatureLink;
