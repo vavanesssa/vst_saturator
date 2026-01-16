@@ -86,6 +86,9 @@ public:
   ~VisualizerTabComponent() override;
 
   void setActive(bool shouldBeActive);
+  double getLastFrameTimeMs() const;
+  double getRefreshIntervalMs() const;
+  bool isActiveNow() const;
   void resized() override;
   void paint(juce::Graphics &g) override;
 

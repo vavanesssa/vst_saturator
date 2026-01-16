@@ -527,6 +527,16 @@ void VisualizerTabComponent::setActive(bool shouldBeActive) {
     stopTimer();
 }
 
+double VisualizerTabComponent::getLastFrameTimeMs() const {
+  return lastFrameTimeMs;
+}
+
+double VisualizerTabComponent::getRefreshIntervalMs() const {
+  return fpsTimerMs;
+}
+
+bool VisualizerTabComponent::isActiveNow() const { return isActive; }
+
 void VisualizerTabComponent::resized() { grid.setBounds(getLocalBounds()); }
 
 void VisualizerTabComponent::paint(juce::Graphics &g) {

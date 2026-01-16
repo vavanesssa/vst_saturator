@@ -52,12 +52,90 @@ void TabLookAndFeel::drawButtonText(juce::Graphics &g, juce::TextButton &button,
 }
 
 //==============================================================================
+DevToolsPopover::DevToolsPopover(CustomLookAndFeel &laf) : lookAndFeel(laf) {
+  setInterceptsMouseClicks(true, true);
+}
+
+void DevToolsPopover::setMetrics(const DevToolsMetrics &newMetrics) {
+  metrics = newMetrics;
+  lines.clear();
+
+  lines.add(juce::String::formatted("CPU: %.1f%%", metrics.cpuPercent));
+  lines.add(juce::String::formatted("Sample rate: %.1f kHz",
+                                    metrics.sampleRate / 1000.0));
+  lines.add(juce::String::formatted("Buffer: %d samples", metrics.blockSize));
+  lines.add(
+      juce::String::formatted("Latency: %d samples", metrics.latencySamples));
+  lines.add(juce::String::formatted("I/O: %d in / %d out",
+                                    metrics.inputChannels,
+                                    metrics.outputChannels));
+  lines.add(juce::String::formatted("Parameters: %d",
+                                    metrics.parameterCount));
+  lines.add(juce::String::formatted("Active tab: %s",
+                                    metrics.activeTabLabel.toRawUTF8()));
+  lines.add(juce::String::formatted(
+      "Visualizers: %s", metrics.visualizersActive ? "On" : "Off"));
+  lines.add(juce::String::formatted("Viz FPS: %.1f (%.1f ms)",
+                                    metrics.visualizerFps,
+                                    metrics.visualizerFrameTimeMs));
+  lines.add(juce::String::formatted("UI FPS: %.1f (%.1f ms)", metrics.uiFps,
+                                    metrics.uiFrameTimeMs));
+  lines.add(juce::String::formatted("Scale: %.2fx", metrics.scaleFactor));
+  lines.add(juce::String::formatted("Window: %s",
+                                    metrics.windowSize.toRawUTF8()));
+  lines.add(juce::String::formatted("Build: %s",
+                                    metrics.buildHash.toRawUTF8()));
+  lines.add(
+      juce::String::formatted("RMS: %.3f", metrics.currentRms));
+}
+
+void DevToolsPopover::paint(juce::Graphics &g) {
+  auto fullBounds = getLocalBounds().toFloat();
+  constexpr float pointerHeight = 10.0f;
+  constexpr float cornerSize = 14.0f;
+  constexpr float pointerWidth = 18.0f;
+
+  auto body = fullBounds.withTrimmedBottom(pointerHeight);
+  juce::Path bubble;
+  bubble.addRoundedRectangle(body, cornerSize);
+
+  const float pointerX = body.getX() + 24.0f;
+  bubble.addTriangle({pointerX, body.getBottom()},
+                     {pointerX + pointerWidth, body.getBottom()},
+                     {pointerX + pointerWidth * 0.5f, fullBounds.getBottom()});
+
+  juce::DropShadow shadow(
+      juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.35f), 10,
+      juce::Point<int>(0, 4));
+  shadow.drawForPath(g, bubble);
+
+  g.setColour(juce::Colour::fromFloatRGBA(0.98f, 0.93f, 0.85f, 0.98f));
+  g.fillPath(bubble);
+  g.setColour(juce::Colour::fromFloatRGBA(0.6f, 0.35f, 0.1f, 0.8f));
+  g.strokePath(bubble, juce::PathStrokeType(1.2f));
+
+  auto textArea = body.reduced(16.0f, 12.0f);
+  g.setColour(juce::Colour::fromFloatRGBA(0.45f, 0.25f, 0.1f, 1.0f));
+  g.setFont(lookAndFeel.getCustomFont(22.0f, juce::Font::bold));
+  g.drawText("DEVTOOLS", textArea.removeFromTop(26.0f),
+             juce::Justification::centredLeft, true);
+
+  textArea.removeFromTop(6.0f);
+  g.setFont(lookAndFeel.getCustomFont(16.0f));
+  for (const auto &line : lines) {
+    g.drawText(line, textArea.removeFromTop(20.0f),
+               juce::Justification::centredLeft, true);
+  }
+}
+
+//==============================================================================
 Vst_saturatorAudioProcessorEditor::Vst_saturatorAudioProcessorEditor(
     Vst_saturatorAudioProcessor &p)
     : AudioProcessorEditor(&p), audioProcessor(p),
       tabLookAndFeel(customLookAndFeel),
       visualizerTab(p.analyzerTap, p.apvts.state),
-      tooltipWindow(this, 1500, customLookAndFeel) {
+      tooltipWindow(this, 1500, customLookAndFeel),
+      devToolsPopover(customLookAndFeel) {
 
   // Load build hash from version.txt
   juce::File versionFile;
@@ -551,6 +629,33 @@ C'est comme zapper des lampes de radio. 📻)"));
   waveLeftBtn.onClick = [this]() { navigateWaveshape(-1); };
   waveRightBtn.onClick = [this]() { navigateWaveshape(1); };
 
+  devToolsButton.setLookAndFeel(&customLookAndFeel);
+  devToolsButton.setColour(juce::TextButton::buttonColourId,
+                           juce::Colour::fromFloatRGBA(0.98f, 0.9f, 0.78f,
+                                                       1.0f));
+  devToolsButton.setColour(juce::TextButton::textColourOffId,
+                           juce::Colour::fromFloatRGBA(0.55f, 0.3f, 0.1f,
+                                                       1.0f));
+  devToolsButton.setColour(juce::TextButton::textColourOnId,
+                           juce::Colour::fromFloatRGBA(0.55f, 0.3f, 0.1f,
+                                                       1.0f));
+  devToolsButton.setTooltip(juce::CharPointer_UTF8(
+      R"(DevTools 🐞
+Ouvre un panneau de diagnostics en temps réel.
+CPU, FPS, buffers, état des visualizers.)"));
+  devToolsButton.setClickingTogglesState(true);
+  devToolsButton.onClick = [this]() {
+    devToolsOpen = devToolsButton.getToggleState();
+    devToolsPopover.setVisible(devToolsOpen);
+    if (devToolsOpen) {
+      devToolsPopover.toFront(false);
+      refreshDevTools();
+    }
+  };
+  addAndMakeVisible(devToolsButton);
+  devToolsPopover.setVisible(false);
+  addAndMakeVisible(devToolsPopover);
+
   // Set initial size to design size
   // Enable resizing with constraints (min 650x425 = 50% of design, max
   // 2600x1700 = 200% of design)
@@ -575,6 +680,8 @@ C'est comme zapper des lampes de radio. 📻)"));
   addAndMakeVisible(visualizerTab);
 
   updateTabVisibility();
+
+  startTimerHz(4);
 }
 
 Vst_saturatorAudioProcessorEditor::~Vst_saturatorAudioProcessorEditor() {}
@@ -619,6 +726,59 @@ void Vst_saturatorAudioProcessorEditor::updateTabVisibility() {
   visualizerTab.setActive(showVisualizers);
 }
 
+void Vst_saturatorAudioProcessorEditor::timerCallback() { refreshDevTools(); }
+
+juce::String Vst_saturatorAudioProcessorEditor::tabLabel(TabPage tab) const {
+  switch (tab) {
+  case TabPage::Knobs:
+    return "Knobs";
+  case TabPage::Visualizers:
+    return "Visualizers";
+  case TabPage::Page2:
+    return "Page 2";
+  case TabPage::Page3:
+    return "Page 3";
+  case TabPage::Page4:
+    return "Page 4";
+  }
+  return "Knobs";
+}
+
+void Vst_saturatorAudioProcessorEditor::refreshDevTools() {
+  if (!devToolsOpen)
+    return;
+
+  DevToolsMetrics metrics;
+  metrics.cpuPercent = audioProcessor.getCpuUsage() * 100.0;
+  metrics.sampleRate = audioProcessor.getSampleRate();
+  metrics.blockSize = audioProcessor.getBlockSize();
+  metrics.latencySamples = audioProcessor.getLatencySamples();
+  metrics.inputChannels = audioProcessor.getTotalNumInputChannels();
+  metrics.outputChannels = audioProcessor.getTotalNumOutputChannels();
+  metrics.parameterCount =
+      static_cast<int>(audioProcessor.getParameters().size());
+  metrics.uiFrameTimeMs = uiFrameTimeMs;
+  metrics.uiFps =
+      uiFrameTimeMs > 0.0 ? (1000.0 / uiFrameTimeMs) : 0.0;
+  metrics.visualizerFrameTimeMs = visualizerTab.getLastFrameTimeMs();
+  metrics.visualizerRefreshMs = visualizerTab.getRefreshIntervalMs();
+  metrics.visualizerFps =
+      metrics.visualizerRefreshMs > 0.0
+          ? (1000.0 / metrics.visualizerRefreshMs)
+          : 0.0;
+  metrics.scaleFactor = scaleFactor;
+  metrics.buildHash = buildHash;
+  metrics.activeTabLabel = tabLabel(activeTab);
+  metrics.visualizersActive = visualizerTab.isActiveNow();
+  metrics.currentRms =
+      audioProcessor.currentRMSLevel.load(std::memory_order_relaxed);
+  metrics.windowSize =
+      juce::String(getWidth()) + "x" + juce::String(getHeight());
+
+  devToolsPopover.setMetrics(metrics);
+  devToolsPopover.repaint();
+}
+
 //==============================================================================
 juce::Rectangle<int>
 Vst_saturatorAudioProcessorEditor::scaleDesignBounds(int x, int y, int width,
@@ -634,6 +794,11 @@ Vst_saturatorAudioProcessorEditor::scaleDesignBounds(int x, int y, int width,
 
 //==============================================================================
 void Vst_saturatorAudioProcessorEditor::paint(juce::Graphics &g) {
+  const auto nowMs = juce::Time::getMillisecondCounterHiRes();
+  if (lastUiPaintMs > 0.0)
+    uiFrameTimeMs = nowMs - lastUiPaintMs;
+  lastUiPaintMs = nowMs;
+
   // Fill entire window with background (including letterbox areas)
   g.fillAll(juce::Colour::fromFloatRGBA(0.15f, 0.15f, 0.15f,
                                         1.0f)); // Dark grey for letterbox
@@ -992,6 +1157,23 @@ void Vst_saturatorAudioProcessorEditor::resized() {
   // Footer signature link
   signatureLink.setBounds(
       scaleDesignBounds(DESIGN_WIDTH - 350, DESIGN_HEIGHT - 32, 340, 26));
+
+  const int devToolsButtonSize = 30;
+  const int devToolsMargin = 16;
+  const int devToolsButtonX = devToolsMargin;
+  const int devToolsButtonY =
+      DESIGN_HEIGHT - devToolsMargin - devToolsButtonSize;
+  devToolsButton.setBounds(scaleDesignBounds(devToolsButtonX, devToolsButtonY,
+                                             devToolsButtonSize,
+                                             devToolsButtonSize));
+
+  const int popoverWidth = 420;
+  const int popoverHeight = 310;
+  int popoverX = devToolsButtonX;
+  int popoverY = devToolsButtonY - popoverHeight - 12;
+  popoverY = juce::jmax(10, popoverY);
+  devToolsPopover.setBounds(
+      scaleDesignBounds(popoverX, popoverY, popoverWidth, popoverHeight));
 
   // Visualizer tab takes full width (no Steve image margin)
   const int visualizerTop = 80;
