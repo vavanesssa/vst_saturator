@@ -198,12 +198,13 @@ Whether you want to:
 
 ### 🔑 Key Features
 - **3-Band Crossover** using Linkwitz-Riley filters (flat phase response)
-- **28 Waveshape Algorithms** (Tube, Tape, Diode, Fuzz, Chebyshev, etc.)
+- **58 Waveshape Algorithms** (Tube, Tape, Diode, Fuzz, Chebyshev, etc.)
 - **4x Oversampling** for alias-free saturation
 - **Delta Monitor** for isolating added harmonics
 - **Smooth Crossfades** (10ms) for click-free parameter changes
 - **Animated Mascot** reacting to audio RMS level
 - **Procedural UI** (no image-based knobs)
+- **Real-time Visualizers** with 5 analysis panels
 
 ---
 
@@ -350,14 +351,14 @@ Line 265-669: processBlock()
 ├── 637-668: Visualizer buffer write + RMS calculation
 ```
 
-#### 📄 `PluginEditor.h` (183 lines)
+#### 📄 `PluginEditor.h` (287 lines)
 ```cpp
 class Vst_saturatorAudioProcessorEditor : public juce::AudioProcessorEditor,
                                           private juce::Timer {
 public:
     Vst_saturatorAudioProcessorEditor(Vst_saturatorAudioProcessor&);
     ~Vst_saturatorAudioProcessorEditor() override;
-    
+
     void paint(juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
@@ -394,33 +395,58 @@ private:
     juce::TextButton presetLeftBtn{"<"}, presetRightBtn{">"};
     std::vector<PresetData> presets;
     
-    // G. Styling
+    // G. Waveshape navigation
+    juce::TextButton waveLeftBtn{"<"};
+    juce::TextButton waveRightBtn{">"};
+    
+    // H. Tab System
+    juce::TextButton knobsTabButton{"KNOBS"};
+    juce::TextButton page1TabButton{"VISUALIZERS"};
+    juce::TextButton page2TabButton{"2"};
+    juce::TextButton page3TabButton{"3"};
+    juce::TextButton page4TabButton{"4"};
+    
+    // I. Styling
     CustomLookAndFeel customLookAndFeel;
     juce::Image steveImage, steve2Image;
-    juce::TooltipWindow tooltipWindow;
+    
+    // J. DevTools
+    juce::TextButton devToolsButton{"🐞"};
+    DevToolsPopover devToolsPopover;
+    
+    // K. Visualizer Tab
+    VisualizerTabComponent visualizerTab;
+    
+    // L. Build hash
+    juce::String buildHash;
 };
 ```
 
-#### 📄 `PluginEditor.cpp` (975 lines)
+#### 📄 `PluginEditor.cpp` (main UI file, ~1000+ lines)
 
 **Key Functions:**
 
 | Function | Lines | Description |
 |----------|-------|-------------|
-| `Constructor` | 14-308 | Initialize all 25+ UI components, attachments, tooltips |
-| `scaleDesignBounds()` | 312-323 | Scale fixed design to any window size |
-| `paint()` | 325-478 | Draw background, Steve, waveform, labels |
-| `resized()` | 480-641 | Position all components using scaled coordinates |
-| `timerCallback()` | 643-715 | Update waveform, Steve animation (30fps) |
-| `initializePresets()` | 821-1020 | Define 76 factory presets |
-| `applyPreset()` | 856-907 | Apply preset values to sliders |
-| `loadImage()` | 944-974 | Load images from BinaryData or filesystem |
+| `Constructor` | ~14-350 | Initialize all 25+ UI components, attachments, tooltips, tabs |
+| `scaleDesignBounds()` | ~350-365 | Scale fixed design to any window size |
+| `paint()` | ~365-520 | Draw background, Steve, labels, tabs |
+| `resized()` | ~520-700 | Position all components using scaled coordinates |
+| `timerCallback()` | ~700-780 | Update Steve animation, DevTools metrics (~30fps) |
+| `setActiveTab()` | ~780-800 | Switch between Knobs and Visualizers tabs |
+| `initializePresets()` | ~800-1050 | Define 76 factory presets |
+| `applyPreset()` | ~1050-1100 | Apply preset values to all sliders |
+| `navigatePreset()` | ~1100-1120 | Handle preset navigation with arrow buttons |
+| `navigateWaveshape()` | ~1120-1140 | Handle waveshape navigation with arrow buttons |
+| `refreshDevTools()` | ~1140-1200 | Update DevTools metrics display |
+| `loadImage()` | ~1200-1220 | Load images from BinaryData or filesystem |
 
-#### 📄 `CustomLookAndFeel.h` (96 lines)
+#### 📄 `CustomLookAndFeel.h` (123 lines)
 ```cpp
 class CustomLookAndFeel : public juce::LookAndFeel_V4 {
 public:
     CustomLookAndFeel();
+    ~CustomLookAndFeel() override = default;
     
     // Resource loading
     void ensureImageLoaded();
@@ -429,11 +455,23 @@ public:
     
     // Component drawing overrides
     void drawRotarySlider(...) override;      // Procedural knobs
+    void getSliderLayout(...) override;         // Custom slider layout
+    void createSliderTextBox(...) override;    // Custom text box
+    void hitTestRotarySlider(...) override;   // Larger hit area
     void drawToggleButton(...) override;      // Glowy toggle buttons
     void drawComboBox(...) override;          // Styled dropdowns
+    void positionComboBoxText(...) override;   // Combo text positioning
     void drawTooltip(...) override;           // Orange tooltips
+    void getTooltipBounds(...) override;      // Scrollable tooltip bounds
     void drawPopupMenuItem(...) override;     // Menu styling
+    void drawPopupMenuBackground(...) override; // Menu background
+    void drawPopupMenuSectionHeader(...) override; // Section headers
+    void getIdealPopupMenuItemSize(...) override; // Menu item sizing
+    void drawButtonBackground(...) override;  // Button backgrounds
     void drawButtonText(...) override;        // Navigation arrows
+    void getComboBoxFont(...) override;      // Font styling
+    void getLabelFont(...) override;         // Font styling
+    void getPopupMenuFont(...) override;     // Font styling
 
 private:
     juce::Image indicatorImage;
@@ -441,17 +479,24 @@ private:
 };
 ```
 
-#### 📄 `CustomLookAndFeel.cpp` (621 lines)
+#### 📄 `CustomLookAndFeel.cpp` (~700+ lines)
 
 **Key Functions:**
 
 | Function | Lines | Description |
 |----------|-------|-------------|
-| `ensureFontLoaded()` | 56-84 | Load NanumPenScript from BinaryData |
-| `drawRotarySlider()` | 100-285 | **Main knob rendering** - concentric rings, gradient arc |
-| `HoverLabel` class | 302-341 | Interactive text box with hover effects |
-| `drawToggleButton()` | 381-432 | Glowing orange toggle buttons |
-| `drawPopupMenuItem()` | 522-567 | Custom menu item colors |
+| `Constructor` | ~20-29 | Set popup colors, load font immediately |
+| `ensureFontLoaded()` | ~57-85 | Load NanumPenScript from BinaryData |
+| `ensureImageLoaded()` | ~31-55 | Load indicator image from multiple paths |
+| `drawRotarySlider()` | ~100-300 | **Main knob rendering** - concentric rings, gradient arc |
+| `getSliderLayout()` | ~300-340 | Custom layout to center text box |
+| `createSliderTextBox()` | ~340-380 | Custom text box with hit testing |
+| `drawToggleButton()` | ~400-460 | Glowing orange toggle buttons |
+| `drawComboBox()` | ~460-510 | Styled dropdown with custom border |
+| `drawTooltip()` | ~550-600 | Orange tooltip with scroll support |
+| `drawPopupMenuItem()` | ~620-670 | Custom menu item colors |
+| `drawPopupMenuSectionHeader()` | ~670-690 | Orange separator headers |
+| `drawButtonBackground()` | ~700-750 | Navigation arrow button styling |
 
 ### Assets Directory (`Assets/`)
 
@@ -459,58 +504,211 @@ private:
 |------|------|--------|-------|
 | `NanumPenScript-Regular.ttf` | 3.2 MB | TrueType | Custom handwriting font |
 | `steve.png` | 2.3 MB | PNG | Mascot (closed mouth) |
-| `steve2.png` | 2.2 MB | PNG | Mascot (open mouth - talking) |
+| `steve2.png` | 2.2 MB | PNG | Mascot (open mouth - talking state) |
 | `indicator.png` | 2 KB | PNG | Knob position dot |
 | `background.png` | 2.4 MB | PNG | (Legacy, not currently used) |
 | `version.txt` | 26 B | Text | Build hash + timestamp |
 
----
-
-## 🎛 Parameter System (20 Parameters)
-
-### Complete Parameter Reference
-
+#### 📄 `VisualizerAnalysis.h` (75 lines)
 ```cpp
-// A. GLOBAL SATURATION (3 params)
-┌──────────────┬────────────────┬─────────────┬─────────────┬──────────┐
-│ ID           │ Name           │ Min         │ Max         │ Default  │
-├──────────────┼────────────────┼─────────────┼─────────────┼──────────┤
-│ drive        │ Saturation     │ 0.0         │ 24.0 dB     │ 0.0      │
-│ shape        │ Shape          │ 0.0         │ 1.0         │ 0.0      │
-│ waveshape    │ Waveshape      │ 0           │ 57 (choice) │ 0 (Tube) │
-└──────────────┴────────────────┴─────────────┴─────────────┴──────────┘
+// Data structure for visualizer frame
+struct VisualizerFrameData {
+    std::vector<float> preWaveform;
+    std::vector<float> postWaveform;
+    std::vector<float> deltaWaveform;
+    std::vector<float> preSpectrum;
+    std::vector<float> postSpectrum;
+    std::vector<float> deltaSpectrum;
+    float crestPre = 0.0f;
+    float crestPost = 0.0f;
+    float crestDelta = 0.0f;
+    float crestChange = 0.0f;
+    float peakPre = 0.0f;
+    float rmsPre = 0.0f;
+    float peakPost = 0.0f;
+    float rmsPost = 0.0f;
+    float peakDelta = 0.0f;
+    float rmsDelta = 0.0f;
+    float lowHighBalance = 0.5f;
+    bool hasData = false;
+};
 
-// B. LOW BAND (4 params)
-┌──────────────┬────────────────┬─────────────┬─────────────┬──────────┐
-│ lowEnable    │ Low Enable     │ false       │ true        │ false    │
-│ lowFreq      │ Low Freq       │ 20 Hz       │ 1000 Hz     │ 200 Hz   │
-│ lowWarmth    │ Low Warmth     │ 0.0         │ 1.0         │ 0.0      │
-│ lowLevel     │ Low Level      │ -24 dB      │ +24 dB      │ 0.0      │
-└──────────────┴────────────────┴─────────────┴─────────────┴──────────┘
+// Ring buffer for audio capture (thread-safe)
+class AnalyzerTap {
+public:
+    explicit AnalyzerTap(int bufferSize = 8192);
+    void prepare(double newSampleRate);
+    void setEnabled(bool shouldEnable);
+    bool isEnabled() const;
+    void pushSamples(const juce::AudioBuffer<float> &preBuffer,
+                     const juce::AudioBuffer<float> &postBuffer);
+    void readLatest(std::vector<float> &preOut, std::vector<float> &postOut,
+                   int numSamples) const;
+private:
+    std::vector<float> preRingBuffer;
+    std::vector<float> postRingBuffer;
+    std::atomic<int> writeIndex{0};
+    std::atomic<bool> enabled{false};
+    double sampleRate = 44100.0;
+};
 
-// C. HIGH BAND (4 params)
-┌──────────────┬────────────────┬─────────────┬─────────────┬──────────┐
-│ highEnable   │ High Enable    │ false       │ true        │ false    │
-│ highFreq     │ High Freq      │ 1000 Hz     │ 20000 Hz    │ 5000 Hz  │
-│ highSoftness │ High Softness  │ 0.0         │ 1.0         │ 0.0      │
-│ highLevel    │ High Level     │ -24 dB      │ +24 dB      │ 0.0      │
-└──────────────┴────────────────┴─────────────┴─────────────┴──────────┘
+// Analysis engine that processes ring buffer into visualizer data
+class VisualizerAnalysisEngine {
+public:
+    explicit VisualizerAnalysisEngine(AnalyzerTap &tapToUse);
+    void setFftSize(int newFftSize);
+    void setScopeSize(int newScopeSize);
+    void updateFrame(VisualizerFrameData &frame);
+private:
+    void ensureBuffers();
+    void computeSpectrum(const std::vector<float> &timeDomain,
+                         std::vector<float> &spectrumOut);
+    void computeCrestMetrics(const std::vector<float> &buffer, float &peakOut,
+                         float &rmsOut, float &crestOut) const;
+    AnalyzerTap &tap;
+    int fftSize = 2048;
+    int scopeSize = 512;
+    std::unique_ptr<juce::dsp::FFT> fft;
+    std::unique_ptr<juce::dsp::WindowingFunction<float>> window;
+    std::vector<float> fftBuffer;
+    std::vector<float> preTemp;
+    std::vector<float> postTemp;
+    std::vector<float> deltaTemp;
+};
+```
 
-// D. GAIN & ROUTING (6 params)
-┌──────────────┬────────────────┬─────────────┬─────────────┬──────────┐
-│ inputGain    │ Input Gain     │ -24 dB      │ +24 dB      │ 0.0      │
-│ mix          │ Mix            │ 0%          │ 100%        │ 100%     │
-│ output       │ Output Gain    │ -24 dB      │ +24 dB      │ 0.0      │
-│ prePost      │ Pre/Post       │ false       │ true        │ false    │
-│ limiter      │ Limiter        │ false       │ true        │ true     │
-│ bypass       │ Bypass         │ false       │ true        │ false    │
-└──────────────┴────────────────┴─────────────┴─────────────┴──────────┘
+#### 📄 `VisualizerAnalysis.cpp` (193 lines)
 
-// E. DELTA MONITORING (2 params)
-┌──────────────┬────────────────┬─────────────┬─────────────┬──────────┐
-│ delta        │ Delta          │ false       │ true        │ false    │
-│ deltaGain    │ Delta Gain     │ -24 dB      │ 0 dB        │ -12 dB   │
-└──────────────┴────────────────┴─────────────┴─────────────┴──────────┘
+**Key Functions:**
+
+| Function | Lines | Description |
+|----------|-------|-------------|
+| `pushSamples()` | ~21-47 | Write audio samples to ring buffer (thread-safe) |
+| `readLatest()` | ~49-71 | Read latest samples from ring buffer |
+| `updateFrame()` | ~88-132 | **Main analysis loop** - FFT, metrics, spectrum |
+| `ensureBuffers()` | ~134-148 | Resize buffers when FFT/scope size changes |
+| `computeSpectrum()` | ~150-170 | FFT analysis with Hann windowing |
+| `computeCrestMetrics()` | ~172-192 | Calculate peak/RMS/crest factor |
+
+#### 📄 `VisualizerComponents.h` (128 lines)
+```cpp
+// Visualizer display modes
+enum class VisualizerMode { Waveform, Bars, Line, Heat, Harmonics };
+
+// Panel state (persisted)
+struct VisualizerPanelState {
+    VisualizerMode mode = VisualizerMode::Waveform;
+    bool showPre = true;
+    bool peakHold = false;
+    int smoothingIndex = 2;
+};
+
+// Single visualizer panel with header + display area
+class VisualizerPanelComponent final : public juce::Component {
+public:
+    VisualizerPanelComponent(int panelIndex, const juce::String &panelTitle,
+                         juce::Colour panelTint);
+    void setPanelState(const VisualizerPanelState &newState);
+    VisualizerPanelState getPanelState() const;
+    void setFrameData(const VisualizerFrameData &newFrame);
+    void setExpanded(bool shouldExpand);
+    void setExpandCallback(ExpandCallback callback);
+    void setModeAvailability(const std::array<bool, 5> &availability);
+    void setToggleVisibility(bool showPreToggle, bool showHoldToggle,
+                         bool showSmoothingToggle);
+    void paint(juce::Graphics &g) override;
+    void resized() override;
+private:
+    void configureHeader();
+    void updateExpandButton();
+    void updateModeAvailability();
+    void drawWaveform(juce::Graphics &g, juce::Rectangle<float> area,
+                      const std::vector<float> &wave, juce::Colour colour) const;
+    void drawSpectrumBars(juce::Graphics &g, juce::Rectangle<float> area,
+                        const std::vector<float> &spectrum,
+                        juce::Colour colour) const;
+    void drawSpectrumLine(juce::Graphics &g, juce::Rectangle<float> area,
+                        const std::vector<float> &spectrum,
+                        juce::Colour colour) const;
+    void drawHeatmap(juce::Graphics &g, juce::Rectangle<float> area);
+    void drawCrestMeter(juce::Graphics &g, juce::Rectangle<float> area);
+    void drawHarmonicBalance(juce::Graphics &g, juce::Rectangle<float> area);
+    VisualizerPanelState state;
+    VisualizerFrameData frame;
+    ExpandCallback expandCallback;
+    bool isExpanded = false;
+    std::deque<std::vector<float>> heatHistory;
+    int maxHeatHistory = 24;
+};
+
+// Grid layout for multiple panels
+class VisualizerGridComponent final : public juce::Component {
+public:
+    explicit VisualizerGridComponent(
+        std::array<VisualizerPanelComponent *, 5> panelComponents);
+    void setExpandedPanelIndex(int index);
+    void resized() override;
+private:
+    std::array<VisualizerPanelComponent *, 5> panels;
+    int expandedPanelIndex = -1;
+};
+
+// Main visualizer tab (timer-driven)
+class VisualizerTabComponent final : public juce::Component,
+                                       private juce::Timer {
+public:
+    VisualizerTabComponent(AnalyzerTap &tapToUse, juce::ValueTree stateRoot);
+    ~VisualizerTabComponent() override;
+    void setActive(bool shouldBeActive);
+    double getLastFrameTimeMs() const;
+    double getRefreshIntervalMs() const;
+    bool isActiveNow() const;
+    void resized() override;
+    void paint(juce::Graphics &g) override;
+private:
+    void timerCallback() override;
+    void updateFrameRate(double frameTimeMs);
+    void setExpandedPanel(int index);
+    void restorePanelState();
+    void storePanelState();
+    VisualizerPanelComponent &panelForIndex(int index);
+    const VisualizerPanelComponent &panelForIndex(int index) const;
+    void configurePanelModes();
+    AnalyzerTap &tap;
+    VisualizerAnalysisEngine analysis;
+    VisualizerFrameData frame;
+    VisualizerPanelComponent deltaPanel;
+    VisualizerPanelComponent shaperPanel;
+    VisualizerPanelComponent dynamicsPanel;
+    VisualizerPanelComponent balancePanel;
+    VisualizerPanelComponent utilityPanel;
+    std::array<VisualizerPanelComponent *, 5> panels;
+    VisualizerGridComponent grid;
+    int expandedPanelIndex = -1;
+    bool isActive = false;
+    juce::ValueTree stateTree;
+    double lastFrameTimeMs = 0.0;
+    double fpsTimerMs = 16.0;
+    int stableHighFpsFrames = 0;
+};
+```
+
+#### 📄 `VisualizerComponents.cpp` (~500+ lines)
+
+**Key Functions:**
+
+| Function | Lines | Description |
+|----------|-------|-------------|
+| `configureHeader()` | ~44-87 | Set up mode selector, toggles, buttons |
+| `setPanelState()` | ~89-97 | Apply state to UI controls |
+| `drawWaveform()` | ~200-230 | Time-domain oscilloscope rendering |
+| `drawSpectrumBars()` | ~232-260 | Frequency-domain bar graph |
+| `drawSpectrumLine()` | ~262-290 | Frequency-domain line graph |
+| `drawHeatmap()` | ~292-340 | Historical spectrum heatmap |
+| `drawCrestMeter()` | ~342-370 | Crest factor visualization |
+| `drawHarmonicBalance()` | ~372-400 | Low/High frequency balance |
+| `timerCallback()` | ~450-480 | **Update loop** - read tap, analyze, repaint all panels |
+| `configurePanelModes()` | ~482-510 | Set mode availability per panel |
 ```
 
 ### Parameter Access Pattern
